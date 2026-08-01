@@ -3,83 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OTC AI Engine - Live Synchronized Trading Signals</title>
+    <title>Binance OTC AI Engine - Live Synchronized Signals</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Firebase SDK (v9/v10 Compat Mode) -->
+    <!-- Firebase SDK (v9/v10 Compat) -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
+    <!-- Binance Top Bar -->
     <header class="navbar">
         <div class="logo">
-            <i class="fa-solid fa-robot logo-icon"></i>
-            <span>OTC-QUANTUM <span class="highlight">AI ENGINE</span></span>
+            <i class="fa-solid fa-chart-line logo-icon"></i>
+            <span>BINANCE <span class="highlight">OTC QUANT</span></span>
         </div>
         
-        <!-- Live Online Users Badge -->
-        <div class="online-users-badge">
-            <span class="live-dot"></span> <span id="online-users">1,482</span> Active Traders
-        </div>
-
-        <div class="clock-box">
-            <i class="fa-regular fa-clock"></i>
-            <span id="live-clock">00:00:00 AM</span>
+        <div class="header-right">
+            <div class="online-users-badge">
+                <span class="live-dot"></span> <span id="online-users">1,482</span> Active
+            </div>
+            <div class="clock-box" id="live-clock">00:00:00 AM</div>
         </div>
     </header>
 
-    <div class="container">
+    <div class="main-layout">
         
-        <!-- Today's & 7 Days Overall Stats -->
-        <section class="stats-grid">
-            <div class="stat-card">
-                <h3>আজকের মোট সিগন্যাল</h3>
-                <p id="total-count">0</p>
+        <!-- SECTION 1: HOME (Stats & Overview) -->
+        <section id="section-home" class="app-section active">
+            <div class="section-title">
+                <h2><i class="fa-solid fa-gauge-high"></i> মার্কেট ওভারভিউ & পারফরম্যান্স</h2>
             </div>
-            <div class="stat-card win">
-                <h3>আজকের জয় (Win)</h3>
-                <p id="win-count">0</p>
-            </div>
-            <div class="stat-card loss">
-                <h3>আজকের হার (Loss)</h3>
-                <p id="loss-count">0</p>
-            </div>
-            <div class="stat-card rate">
-                <h3>আজকের একিউরেসি</h3>
-                <p id="win-rate">0%</p>
-            </div>
-            <!-- 7 Days Analytics Card -->
-            <div class="stat-card weekly">
-                <h3>গত ৭ দিনের গড় একিউরেসি</h3>
-                <p id="weekly-rate">94.2%</p>
-            </div>
-        </section>
-
-        <!-- Main Live Synchronized Signal Box -->
-        <section class="live-signal-wrapper">
-            <div class="signal-header">
-                <h2><i class="fa-solid fa-satellite-dish pulse"></i> বর্তমান লাইভ সিগন্যাল (Real-time Global Sync)</h2>
-                <span class="otc-badge">OTC High Payout Market</span>
-            </div>
-
-            <div id="active-signal-card" class="active-card empty">
-                <div class="waiting-msg">
-                    <i class="fa-solid fa-circle-notch fa-spin"></i>
-                    <p>সার্ভারের সাথে ডাটা সিংক্রোনাইজ হচ্ছে... অনুগ্রহ করে অপেক্ষা করুন।</p>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span>আজকের মোট সিগন্যাল</span>
+                    <p id="total-count">0</p>
+                </div>
+                <div class="stat-card win">
+                    <span>আজকের জয় (Win)</span>
+                    <p id="win-count">0</p>
+                </div>
+                <div class="stat-card loss">
+                    <span>আজকের হার (Loss)</span>
+                    <p id="loss-count">0</p>
+                </div>
+                <div class="stat-card rate">
+                    <span>আজকের একিউরেসি</span>
+                    <p id="win-rate">0%</p>
+                </div>
+                <div class="stat-card weekly">
+                    <span>৭ দিনের গড় একিউরেসি</span>
+                    <p id="weekly-rate">94.8%</p>
                 </div>
             </div>
         </section>
 
-        <!-- Signal History Table -->
-        <section class="history-container">
-            <div class="history-header">
-                <h3><i class="fa-solid fa-list-check"></i> সিগন্যাল ট্র্যাকিং হিস্ট্রি</h3>
-                <!-- Date Filter -->
+        <!-- SECTION 2: LIVE SIGNALS (Current Active & Recently Processed) -->
+        <section id="section-signals" class="app-section">
+            <div class="section-title">
+                <h2><i class="fa-solid fa-satellite-dish pulse-yellow"></i> রিয়েল-টাইম সিগন্যাল ইঞ্জিন</h2>
+                <span class="binance-tag">High Precision OTC</span>
+            </div>
+
+            <!-- Active Signal Card -->
+            <div id="active-signal-card" class="binance-card active-box">
+                <div class="waiting-msg">
+                    <i class="fa-solid fa-circle-notch fa-spin icon-yellow"></i>
+                    <p>লাইভ মার্কেট স্ক্যান হচ্ছে... পরবর্তী সিগন্যাল এর জন্য অপেক্ষা করুন।</p>
+                </div>
+            </div>
+
+            <!-- Recently Processed Signals Grid -->
+            <div class="processed-container">
+                <h3><i class="fa-solid fa-clock-rotate-left"></i> সদ্য সমাপ্ত সিগন্যালসমূহ (Processed Cards)</h3>
+                <div id="processed-cards-grid" class="cards-grid">
+                    <p class="no-data">কোনো সমাপ্ত সিগন্যাল লোড হয়নি...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: ANALYTICS & HISTORY -->
+        <section id="section-analytics" class="app-section">
+            <div class="section-title">
+                <h2><i class="fa-solid fa-list-check"></i> সিগন্যাল হিস্ট্রি ও ফিল্টারিং</h2>
                 <div class="date-filter">
-                    <label><i class="fa-solid fa-calendar-days"></i> ফিল্টার: </label>
                     <select id="history-date-select">
                         <option value="today">আজকে (Today)</option>
                         <option value="yesterday">গতকাল (Yesterday)</option>
@@ -93,41 +103,49 @@
                     <thead>
                         <tr>
                             <th>#</th>
-                            <th>তারিখ ও সময়</th>
+                            <th>সময়</th>
                             <th>OTC পেয়ার</th>
-                            <th>দিক (Direction)</th>
+                            <th>দিক</th>
                             <th>মেয়াদ</th>
                             <th>ফলাফল</th>
                         </tr>
                     </thead>
                     <tbody id="history-tbody">
                         <tr>
-                            <td colspan="6" style="text-align:center; color:#787b86;">ডাটাবেজ থেকে ডাটা লোড হচ্ছে...</td>
+                            <td colspan="6" style="text-align:center; color:#848E9C;">ডাটাবেজ থেকে ডাটা লোড হচ্ছে...</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </section>
 
-        <!-- Psychological Live Win Popup Notification -->
-        <div id="live-win-toast" class="win-toast hidden">
-            <i class="fa-solid fa-trophy toast-icon"></i>
-            <div>
-                <strong id="toast-user">@trader_rakib</strong>
-                <p id="toast-text">EUR/USD (OTC)-তে $120 জিতেছে!</p>
-            </div>
-        </div>
-
-        <!-- CTA Affiliate Banner -->
-        <div class="cta-box">
-            <h3>Quotex VIP সিগন্যাল সুবিধা পেতে সাইন-আপ করুন</h3>
-            <p>আমাদের AI সিগন্যাল ব্যবহার করার জন্য তৈরি করুন অফিসিয়াল VIP অ্যাকাউন্ট।</p>
-            <a href="#" class="cta-btn"><i class="fa-solid fa-bolt"></i> Quotex-এ ফ্রি অ্যাকাউন্ট খুলুন</a>
-        </div>
-
     </div>
+
+    <!-- Live Profit Notification Toast -->
+    <div id="live-win-toast" class="win-toast hidden">
+        <i class="fa-solid fa-circle-check toast-icon"></i>
+        <div>
+            <strong id="toast-user">@trader_rakib</strong>
+            <p id="toast-text">EUR/USD (OTC)-তে $120 জিতেছে!</p>
+        </div>
+    </div>
+
+    <!-- Binance Style Bottom Navigation Bar -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" onclick="switchTab('home', this)">
+            <i class="fa-solid fa-house"></i>
+            <span>Home</span>
+        </button>
+        <button class="nav-item" onclick="switchTab('signals', this)">
+            <i class="fa-solid fa-chart-simple"></i>
+            <span>Live Signals</span>
+        </button>
+        <button class="nav-item" onclick="switchTab('analytics', this)">
+            <i class="fa-solid fa-chart-pie"></i>
+            <span>Analytics</span>
+        </button>
+    </nav>
 
     <script src="script.js"></script>
 </body>
-    </html>
-                
+</html>
