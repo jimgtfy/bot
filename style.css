@@ -56,17 +56,27 @@ body { background-color: var(--bg-primary); color: var(--text-main); min-height:
 .live-status { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
 .live-dot { width: 7px; height: 7px; background-color: var(--quotex-green); border-radius: 50%; display: inline-block; animation: blink 1.5s infinite; }
 
-/* --- AI THINKING MODE UI & ANIMATION --- */
-.thinking-card { background: var(--bg-card); border: 1px dashed #2E4263; border-radius: 14px; padding: 35px 20px; text-align: center; position: relative; overflow: hidden; }
-.radar-box { position: relative; width: 80px; height: 80px; margin: 0 auto 18px auto; display: flex; justify-content: center; align-items: center; }
+/* --- AI THINKING MODE UI & CONFORMATIONS --- */
+.thinking-card { background: var(--bg-card); border: 1px dashed #2E4263; border-radius: 14px; padding: 28px 20px; text-align: center; position: relative; overflow: hidden; }
+.radar-box { position: relative; width: 70px; height: 70px; margin: 0 auto 14px auto; display: flex; justify-content: center; align-items: center; }
 .radar-circle { position: absolute; width: 100%; height: 100%; border: 2px solid rgba(0, 230, 118, 0.2); border-radius: 50%; }
 .radar-sweep { position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 2px solid transparent; border-top-color: var(--quotex-green); animation: spin 1.4s linear infinite; }
-.ai-brain-icon { font-size: 28px; color: var(--quotex-green); animation: pulse 1.5s ease-in-out infinite; }
+.ai-brain-icon { font-size: 26px; color: var(--quotex-green); animation: pulse 1.5s ease-in-out infinite; }
 
-.thinking-card h3 { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 6px; }
-.thinking-card p { font-size: 12px; color: var(--text-muted); margin-bottom: 15px; }
-.scanned-assets { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
-.asset-pill { background: var(--bg-primary); font-size: 11px; padding: 4px 10px; border-radius: 12px; border: 1px solid var(--border-color); color: var(--text-muted); }
+.thinking-card h3 { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+.thinking-card p { font-size: 12px; color: var(--text-muted); margin-bottom: 16px; }
+
+/* Indicators & Conformations Checklist */
+.conformation-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; text-align: left; margin-bottom: 15px; }
+.conf-item { background: var(--bg-primary); border: 1px solid var(--border-color); padding: 10px 12px; border-radius: 8px; font-size: 11px; display: flex; align-items: center; justify-content: space-between; }
+.conf-item span { color: var(--text-muted); }
+.conf-item strong { color: var(--quotex-green); font-size: 11px; }
+
+/* Pre-Signal Warning Banner */
+.pre-signal-alert { background: rgba(255, 214, 0, 0.12); border: 2px solid #FFD600; border-radius: 12px; padding: 18px; text-align: center; animation: pulseAlert 0.8s infinite alternate; }
+.pre-signal-alert h3 { color: #FFD600; font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+.pre-signal-alert p { color: #fff; font-size: 13px; margin-bottom: 10px; }
+@keyframes pulseAlert { from { box-shadow: 0 0 5px rgba(255, 214, 0, 0.2); } to { box-shadow: 0 0 20px rgba(255, 214, 0, 0.5); } }
 
 /* --- QUOTEX ACTIVE SIGNAL CARD BLUEPRINT --- */
 .quotex-active-card { background: var(--bg-card); border-radius: 14px; padding: 22px; border: 2px solid var(--quotex-green); box-shadow: 0 0 25px rgba(0, 230, 118, 0.15); animation: cardGlow 2s infinite alternate; }
@@ -106,11 +116,6 @@ table { width: 100%; border-collapse: collapse; text-align: left; }
 th, td { padding: 12px 16px; border-bottom: 1px solid var(--border-color); font-size: 13px; }
 th { background: var(--bg-elevated); color: var(--text-muted); font-weight: 600; }
 
-/* Toast */
-.win-toast { position: fixed; bottom: 80px; left: 20px; background: var(--bg-card); border: 1px solid var(--quotex-green); padding: 12px 16px; border-radius: 8px; display: flex; align-items: center; gap: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.6); z-index: 1000; transition: 0.3s; }
-.win-toast.hidden { opacity: 0; transform: translateY(20px); pointer-events: none; }
-.toast-icon { color: var(--quotex-green); font-size: 18px; }
-
 /* Mobile Bottom Nav */
 .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background-color: var(--bg-card); border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; padding: 8px 0; z-index: 999; }
 .nav-item { background: none; border: none; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; font-size: 11px; width: 33%; }
@@ -120,4 +125,4 @@ th { background: var(--bg-elevated); color: var(--text-muted); font-weight: 600;
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 @keyframes pulse { 0% { transform: scale(0.95); opacity: 0.7; } 50% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(0.95); opacity: 0.7; } }
 @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-                   
+               
