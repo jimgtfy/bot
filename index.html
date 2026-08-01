@@ -6,7 +6,7 @@
     <title>Quotex AI Quant Signal Engine</title>
     <link rel="stylesheet" href="style.css">
     
-    <!-- Google Fonts: Inter & JetBrains Mono for Numbers -->
+    <!-- Google Fonts: Inter & JetBrains Mono -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     
     <!-- FontAwesome Vector Icons (Zero Image Policy) -->
@@ -22,11 +22,11 @@
     <header class="navbar">
         <div class="logo">
             <i class="fa-solid fa-bolt logo-bolt"></i>
-            <span>QUOTEX <span class="highlight">SIGNAL ROOM</span></span>
+            <span>QUOTEX <span class="highlight">QUANT ROOM</span></span>
         </div>
         
         <div class="header-right">
-            <button id="sound-toggle" class="sound-btn" onclick="toggleSound()">
+            <button id="sound-toggle" class="sound-btn active" onclick="toggleSound()">
                 <i class="fa-solid fa-volume-high" id="sound-icon"></i> Sound
             </button>
             <div class="clock-box mono" id="live-clock">00:00:00 AM</div>
@@ -38,8 +38,8 @@
         <!-- SECTION 1: LANDING & OVERVIEW -->
         <section id="section-home" class="app-section active">
             <div class="hero-card">
-                <h1>কোটেক্স-এর জন্য ৯২% একুরেট লাইভ বাইনারি সিগন্যাল</h1>
-                <p>Advanced Algorithmic OTC Analysis & Instant Execution Engine</p>
+                <h1>কোটেক্স-এর জন্য ৯২% একুরেট অটোমেটেড সিগন্যাল</h1>
+                <p>Advanced Indicators + AI + Quantum Engine Analysis (Fixed 5-Min Alignment)</p>
                 <button class="cta-btn" onclick="switchTabDirect('signals')">
                     <i class="fa-solid fa-satellite-dish"></i> গেট ইনস্ট্যান্ট অ্যাক্সেস
                 </button>
@@ -59,7 +59,7 @@
                     <p class="mono" id="loss-count">0</p>
                 </div>
                 <div class="stat-card rate">
-                    <span>আজকের একিউরেসি</span>
+                    <span>আজকের উইন রেট</span>
                     <p class="mono" id="win-rate">0%</p>
                 </div>
             </div>
@@ -77,18 +77,18 @@
                     <button class="filter-chip" onclick="filterAssets('FOREX', this)">Forex</button>
                 </div>
                 <div class="live-status">
-                    <span class="live-dot"></span> Realtime Engine Connected
+                    <span class="live-dot"></span> Quantum Engine Online
                 </div>
             </div>
 
             <!-- Active Signal Container (Dynamic: Thinking Mode or Active Card) -->
             <div id="active-signal-container">
-                <!-- Javascript code will inject Thinking Mode or Active Signal Card here -->
+                <!-- Javascript will render Active Signal, Alert Box, or Thinking Mode -->
             </div>
 
             <!-- Processed / Closed Cards Gallery -->
             <div class="processed-container">
-                <h3><i class="fa-solid fa-clock-rotate-left"></i> সদ্য সমাপ্ত সিগন্যালসমূহ (Recently Closed)</h3>
+                <h3><i class="fa-solid fa-clock-rotate-left"></i> সদ্য সমাপ্ত সিগন্যালসমূহ (Today's Closed)</h3>
                 <div id="processed-cards-grid" class="cards-grid">
                     <p class="no-data">ডাটা প্রসেস হচ্ছে...</p>
                 </div>
@@ -98,7 +98,7 @@
         <!-- SECTION 3: ANALYTICS & HISTORY -->
         <section id="section-analytics" class="app-section">
             <div class="section-title">
-                <h2><i class="fa-solid fa-list-check"></i> সিগন্যাল প্রফেশনাল হিস্ট্রি</h2>
+                <h2><i class="fa-solid fa-list-check"></i> আজকের পারফরম্যান্স ইতিহাস</h2>
             </div>
 
             <div class="table-responsive">
@@ -106,10 +106,10 @@
                     <thead>
                         <tr>
                             <th>#</th>
-                            <th>সময়</th>
+                            <th>শুরুর সময়</th>
                             <th>অ্যাসেট</th>
                             <th>দিক (Direction)</th>
-                            <th>মেয়াদ</th>
+                            <th>মেয়াদ</th>
                             <th>ফলাফল</th>
                         </tr>
                     </thead>
@@ -122,15 +122,6 @@
             </div>
         </section>
 
-    </div>
-
-    <!-- Live Profit Notification Toast -->
-    <div id="live-win-toast" class="win-toast hidden">
-        <i class="fa-solid fa-circle-check toast-icon"></i>
-        <div>
-            <strong id="toast-user">@trader_rakib</strong>
-            <p id="toast-text">EUR/USD (OTC)-তে $120 জিতেছে!</p>
-        </div>
     </div>
 
     <!-- Mobile Fixed Bottom Navigation -->
