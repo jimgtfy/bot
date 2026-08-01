@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Quantum Signals - Quotex Daily Trading Signals</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Font & FontAwesome Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <!-- Header Section -->
+    <header class="navbar">
+        <div class="logo">
+            <i class="fa-solid fa-chart-line logo-icon"></i>
+            <span>QUANTUM<span class="highlight">SIGNALS</span></span>
+        </div>
+        <div class="clock-box">
+            <i class="fa-regular fa-clock"></i>
+            <span id="live-clock">00:00:00 AM</span>
+        </div>
+    </header>
+
+    <div class="container">
+        
+        <!-- Banner Announcement -->
+        <div class="announcement">
+            <i class="fa-solid fa-robot"></i> 
+            <span>আজকের ৫০টি আলগোরিথমিক সিগন্যাল নিচে লাইভ আপডেট হচ্ছে। সময় অনুযায়ী ট্রেড সম্পাদন করুন।</span>
+        </div>
+
+        <!-- Dashboard Analytics Bar -->
+        <section class="stats-grid">
+            <div class="stat-card">
+                <h3>মোট সিগন্যাল</h3>
+                <p id="total-signals">50</p>
+            </div>
+            <div class="stat-card win">
+                <h3>মোট জয় (Win)</h3>
+                <p id="win-count">0</p>
+            </div>
+            <div class="stat-card loss">
+                <h3>মোট হার (Loss)</h3>
+                <p id="loss-count">0</p>
+            </div>
+            <div class="stat-card rate">
+                <h3>সফলতার হার (Win Rate)</h3>
+                <p id="win-rate">0%</p>
+            </div>
+        </section>
+
+        <!-- Signal Table Section -->
+        <section class="signals-container">
+            <div class="table-header">
+                <h2><i class="fa-solid fa-bolt"></i> আজকের ৫০টি সিগন্যালের তালিকা</h2>
+                <span class="badge live-badge"><i class="fa-solid fa-circle"></i> LIVE ENGINE</span>
+            </div>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>সময় (Time)</th>
+                            <th>অ্যাসেট (Asset)</th>
+                            <th>দিক (Direction)</th>
+                            <th>মেয়াদ (Timeframe)</th>
+                            <th>স্ট্যাটাস/ফলাফল</th>
+                        </tr>
+                    </thead>
+                    <tbody id="signal-table-body">
+                        <!-- JavaScript দিয়ে অটো জেনারেট হবে -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Call To Action / Affiliate Banner -->
+        <div class="cta-box">
+            <h3>এখনো Quotex অ্যাকাউন্ট তৈরি করেননি?</h3>
+            <p>আমাদের VIP সিগন্যাল ব্যবহার করার জন্য তৈরি করুন অফিসিয়াল অ্যাকাউন্ট।</p>
+            <a href="#" class="cta-btn"><i class="fa-solid fa-user-plus"></i> Quotex-এ ফ্রি অ্যাকাউন্ট খুলুন</a>
+        </div>
+
+    </div>
+
+    <footer>
+        <p>© 2026 AI Quantum Signals. All rights reserved. Trading carries financial risk.</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
