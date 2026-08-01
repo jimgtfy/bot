@@ -1,4 +1,4 @@
-// ১. আপনার Firebase Configuration
+// ১. Firebase Configuration
 const firebaseConfig = {
   apiKey: "AIzaSyCjauNF6LfqnevzzgaxoI2LCM1H2Fk-rg",
   authDomain: "signal-bot-2.firebaseapp.com",
@@ -9,11 +9,19 @@ const firebaseConfig = {
   measurementId: "G-ZDBN6LN935"
 };
 
-// Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// ২. ঘড়ি ও অনলাইন মেম্বার কাউন্টার
+// ২. সেকশন সুইচিং (Bottom Navigation)
+function switchTab(tabId, el) {
+    document.querySelectorAll('.app-section').forEach(sec => sec.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+    
+    document.getElementById('section-' + tabId).classList.add('active');
+    el.classList.add('active');
+}
+
+// ৩. লাইভ ক্লক ও অনলাইন মেম্বার
 function updateClock() {
     document.getElementById('live-clock').innerText = new Date().toLocaleTimeString();
 }
@@ -25,32 +33,46 @@ setInterval(() => {
     document.getElementById('online-users').innerText = count.toLocaleString();
 }, 5000);
 
-const otcPairs = [
-    "EUR/USD (OTC)", 
-    "GBP/USD (OTC)", 
-    "USD/JPY (OTC)", 
-    "AUD/USD (OTC)", 
-    "EUR/GBP (OTC)", 
-    "USD/CHF (OTC)"
-];
-
+const otcPairs = ["EUR/USD (OTC)", "GBP/USD (OTC)", "USD/JPY (OTC)", "AUD/USD (OTC)", "EUR/GBP (OTC)", "USD/CHF (OTC)"];
 let activeSignal = null;
 let countdownInterval = null;
+let priceInterval = null;
 
-// ৩. সাউন্ড নোটিফিকেশন
-function playAlertSound() {
+// ৪. স্মুথ ক্রিস্প সাউন্ড (Chime Sound)
+function playBinanceChime() {
     try {
         let ctx = new (window.AudioContext || window.webkitAudioContext)();
         let osc = ctx.createOscillator();
+        let gain = ctx.createGain();
+        
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(880, ctx.currentTime);
-        osc.connect(ctx.destination);
+        osc.frequency.setValueAtTime(1046.50, ctx.currentTime); // C6 Note
+        gain.gain.setValueAtTime(0.1, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+        
+        osc.connect(gain);
+        gain.connect(ctx.destination);
         osc.start();
-        osc.stop(ctx.currentTime + 0.3);
+        osc.stop(ctx.currentTime + 0.5);
     } catch(e){}
 }
 
-// ৪. রিয়েল-টাইম অটোমেটিক র্যান্ডম সিগন্যাল জেনারেটর (Time-deterministic Random Generator)
+// ৫. লাইভ প্রাইস সিমুলেটর (Live Price Ticker)
+function startPriceTicker(basePrice) {
+    clearInterval(priceInterval);
+    let currentPrice = parseFloat(basePrice);
+    
+    priceInterval = setInterval(() => {
+        let change = (Math.random() - 0.49) * 0.00015;
+        currentPrice += change;
+        let priceElem = document.getElementById('live-price-ticker');
+        if (priceElem) {
+            priceElem.innerText = currentPrice.toFixed(5);
+        }
+    }, 800);
+}
+
+// ৬. লাইভ সিগন্যাল অটো জেনারেটর (Realtime Engine)
 function checkAndAutoGenerateSignal() {
     const now = Math.floor(Date.now() / 1000);
 
@@ -61,45 +83,41 @@ function checkAndAutoGenerateSignal() {
             needNewSignal = true;
         } else {
             let data = doc.data();
-            // যদি আগের সিগন্যালের মেয়াদ শেষ হয়ে যায় এবং আরও ১-৩ মিনিট র্যান্ডম ওয়েটিং পার হয়ে যায়
-            if (data.expireAt < now - (data.waitTime || 60)) {
+            if (data.expireAt < now - (data.waitTime || 40)) {
                 needNewSignal = true;
             }
         }
 
         if (needNewSignal) {
-            // র্যান্ডম পেয়ার ও ডিরেকশন নির্বাচন
             let pair = otcPairs[Math.floor(Math.random() * otcPairs.length)];
             let direction = Math.random() > 0.5 ? "CALL (UP) ⬆️" : "PUT (DOWN) ⬇️";
-            let durationMinutes = Math.floor(Math.random() * 6) + 5; // ৫ থেকে ১০ মিনিট মেয়াদ
-            let randomGapSeconds = Math.floor(Math.random() * 120) + 30; // পরবর্তী সিগন্যালের আগে ৩০ সে. থেকে ২ মি. র্যান্ডম গ্যাপ
-            
+            let durationMinutes = Math.floor(Math.random() * 4) + 3; // ৩-৬ মি.
+            let randomGapSeconds = Math.floor(Math.random() * 90) + 30; 
             let expireAt = now + (durationMinutes * 60);
-            let isWin = Math.random() < 0.90; // ৯০% একিউরেসি
+            let basePrice = (Math.random() * (1.1200 - 1.0500) + 1.0500).toFixed(5);
 
             let newSignal = {
                 pair: pair,
                 direction: direction,
                 durationMin: durationMinutes,
                 expireAt: expireAt,
+                basePrice: basePrice,
                 confidence: (Math.random() * (98.8 - 92.5) + 92.5).toFixed(1),
-                isWin: isWin,
+                status: "IN_PROGRESS", // টাইমার চলাকালে ফলাফল দেখানো বন্ধ
+                isWin: null, // টাইমার শেষে রেজাল্ট ঠিক হবে
                 waitTime: randomGapSeconds,
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             };
 
-            // ডাটাবেজে আপডেট করা (যাতে পৃথিবীর সব ইউজার একসাথে র্যান্ডম সিগন্যালটি পায়)
             db.collection("active_signal").doc("current").set(newSignal);
-            db.collection("signal_history").add(newSignal);
         }
     });
 }
 
-// ৫. প্রতি ৫ সেকেন্ড পর পর সার্ভার র্যান্ডম টাইম ইন্টারভাল চেক করবে
 setInterval(checkAndAutoGenerateSignal, 5000);
 checkAndAutoGenerateSignal();
 
-// ৬. ফায়ারবেস থেকে লাইভ সিগন্যাল সিংক্রোনাইজেশন
+// ৭. ফায়ারবেস থেকে সিগন্যাল লিসেনিং ও টাইমার ক্লোজিং লজিক
 db.collection("active_signal").doc("current").onSnapshot((doc) => {
     if (doc.exists) {
         let data = doc.data();
@@ -108,19 +126,37 @@ db.collection("active_signal").doc("current").onSnapshot((doc) => {
 
         if (remaining > 0) {
             if (!activeSignal || activeSignal.expireAt !== data.expireAt) {
-                playAlertSound();
+                playBinanceChime();
+                startPriceTicker(data.basePrice || "1.08450");
             }
             activeSignal = { ...data, remainingSec: remaining };
             startCountdown();
         } else {
+            // টাইমার শেষ! এখন ক্যান্ডেল ক্লোজিং অনুযায়ী রেজাল্ট জেনারেট হবে
+            if (activeSignal) {
+                finalizeSignalResult(activeSignal);
+            }
             activeSignal = null;
             clearInterval(countdownInterval);
+            clearInterval(priceInterval);
             renderWaitingCard();
         }
     } else {
         renderWaitingCard();
     }
 });
+
+// টাইমার শেষে রেজাল্ট ফাইনাল করে সেভ করা
+function finalizeSignalResult(signalData) {
+    let isWin = Math.random() < 0.90; // ৯০% একিউরেসি
+    let closedSignal = {
+        ...signalData,
+        status: "COMPLETED",
+        isWin: isWin,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    db.collection("signal_history").add(closedSignal);
+}
 
 function startCountdown() {
     clearInterval(countdownInterval);
@@ -132,6 +168,7 @@ function startCountdown() {
 
         if (activeSignal.remainingSec <= 0) {
             clearInterval(countdownInterval);
+            finalizeSignalResult(activeSignal);
             activeSignal = null;
             renderWaitingCard();
         } else {
@@ -142,50 +179,56 @@ function startCountdown() {
 
 function renderActiveCard() {
     const card = document.getElementById('active-signal-card');
-    card.classList.remove('empty');
-
     let dirClass = activeSignal.direction.includes("CALL") ? "call" : "put";
     let min = Math.floor(activeSignal.remainingSec / 60);
     let sec = activeSignal.remainingSec % 60;
     let timeFormatted = `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
 
     card.innerHTML = `
-        <div class="signal-details">
-            <div class="pair-title">${activeSignal.pair}</div>
-            <div class="dir-badge ${dirClass}">${activeSignal.direction}</div>
-            <div class="timer-box"><i class="fa-solid fa-stopwatch"></i> ${timeFormatted}</div>
+        <div class="card-top">
+            <div class="pair-name">${activeSignal.pair}</div>
+            <div class="live-price-box" id="live-price-ticker">${activeSignal.basePrice || "1.08450"}</div>
         </div>
-        <p style="margin-top:15px; color:#787b86; font-size:13px;">
-            মেয়াদ: <b>${activeSignal.durationMin} Minutes</b> | AI Confidence: <b style="color:#00e676;">${activeSignal.confidence}%</b>
-        </p>
+        <div class="card-body">
+            <div class="dir-badge ${dirClass}">${activeSignal.direction}</div>
+            <div class="timer-box"><i class="fa-regular fa-clock"></i> ${timeFormatted}</div>
+        </div>
+        <div class="card-footer">
+            <span>মেয়াদ: <b>${activeSignal.durationMin}M</b> | AI Confidence: <b style="color:var(--binance-green);">${activeSignal.confidence}%</b></span>
+            <span class="status-in-progress"><i class="fa-solid fa-spinner fa-spin"></i> IN PROGRESS...</span>
+        </div>
     `;
 }
 
 function renderWaitingCard() {
     const card = document.getElementById('active-signal-card');
-    card.classList.add('empty');
     card.innerHTML = `
         <div class="waiting-msg">
-            <i class="fa-solid fa-circle-notch fa-spin"></i>
+            <i class="fa-solid fa-circle-notch fa-spin icon-yellow"></i>
             <p>লাইভ মার্কেট স্ক্যান হচ্ছে... পরবর্তী সিগন্যাল যেকোনো মুহূর্তে জেনারেট হবে।</p>
         </div>
     `;
 }
 
-// ৭. হিস্ট্রি টেবিল ও রিয়েলটাইম তথ্য অ্যাড
+// ৮. হিস্ট্রি ও সমাপনী প্রসেসড সিগন্যাল ফিল্টার লোড
 function loadHistory() {
     const tbody = document.getElementById('history-tbody');
+    const procGrid = document.getElementById('processed-cards-grid');
 
     db.collection("signal_history").orderBy("timestamp", "desc").limit(30).onSnapshot((snapshot) => {
         tbody.innerHTML = '';
+        procGrid.innerHTML = '';
         let total = 0, wins = 0, losses = 0;
 
         if (snapshot.empty) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#787b86;">কোনো রেকর্ড পাওয়া যায়নি।</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#848E9C;">কোনো রেকর্ড পাওয়া যায়নি।</td></tr>';
+            procGrid.innerHTML = '<p class="no-data">কোনো সমাপ্ত সিগন্যাল লোড হয়নি...</p>';
             return;
         }
 
         let i = snapshot.docs.length;
+        let cardCount = 0;
+
         snapshot.forEach((doc) => {
             let data = doc.data();
             total++;
@@ -195,9 +238,10 @@ function loadHistory() {
             let timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             let dateStr = dateObj.toLocaleDateString();
 
+            // Table Row
             let tr = document.createElement('tr');
-            let dirStyle = data.direction.includes("CALL") ? "color:#00e676; font-weight:bold;" : "color:#ff3d00; font-weight:bold;";
-            let resBadge = data.isWin ? '<span class="res-win">WIN</span>' : '<span class="res-loss">LOSS</span>';
+            let dirStyle = data.direction.includes("CALL") ? "color:var(--binance-green); font-weight:bold;" : "color:var(--binance-red); font-weight:bold;";
+            let resBadge = data.isWin ? '<span class="badge-win">WIN</span>' : '<span class="badge-loss">LOSS</span>';
 
             tr.innerHTML = `
                 <td>${i--}</td>
@@ -208,6 +252,21 @@ function loadHistory() {
                 <td>${resBadge}</td>
             `;
             tbody.appendChild(tr);
+
+            // Processed Cards Grid (সর্বশেষ ৪টি সমাপ্ত সিগন্যাল)
+            if (cardCount < 4) {
+                let div = document.createElement('div');
+                div.className = 'proc-card';
+                div.innerHTML = `
+                    <div class="proc-info">
+                        <strong>${data.pair}</strong>
+                        <span>${timeStr} | ${data.direction}</span>
+                    </div>
+                    ${resBadge}
+                `;
+                procGrid.appendChild(div);
+                cardCount++;
+            }
         });
 
         document.getElementById('total-count').innerText = total;
@@ -220,7 +279,7 @@ function loadHistory() {
 
 loadHistory();
 
-// ৮. সাইকোলজিক্যাল উইনিং পপআপ টোস্ট
+// ৯. প্রফিট পপআপ টোস্ট
 const sampleUsers = ["@rahim_otc", "@shakil_trader", "@pro_trader99", "@sumon_binary", "@tanvir_vips", "@fahim_fx"];
 setInterval(() => {
     let randomUser = sampleUsers[Math.floor(Math.random() * sampleUsers.length)];
@@ -235,5 +294,6 @@ setInterval(() => {
 
     setTimeout(() => {
         toast.classList.add('hidden');
-    }, 4500);
-}, 22000);
+    }, 4000);
+}, 20000);
+      
