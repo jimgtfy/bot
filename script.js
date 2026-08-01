@@ -1,4 +1,4 @@
-// ১. আপনার স্ক্রিনশট থেকে নেয়া সঠিক Firebase Configuration
+// ১. আপনার Firebase Configuration
 const firebaseConfig = {
   apiKey: "AIzaSyCjauNF6LfqnevzzgaxoI2LCM1H2Fk-rg",
   authDomain: "signal-bot-2.firebaseapp.com",
@@ -13,7 +13,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// ২. লাইভ ক্লক ও অ্যাক্টিভ ইউজার কাউন্টার
+// ২. ঘড়ি ও অনলাইন মেম্বার কাউন্টার
 function updateClock() {
     document.getElementById('live-clock').innerText = new Date().toLocaleTimeString();
 }
@@ -25,7 +25,6 @@ setInterval(() => {
     document.getElementById('online-users').innerText = count.toLocaleString();
 }, 5000);
 
-// ৩. নির্ধারিত ৬টি OTC পেয়ার
 const otcPairs = [
     "EUR/USD (OTC)", 
     "GBP/USD (OTC)", 
@@ -38,7 +37,7 @@ const otcPairs = [
 let activeSignal = null;
 let countdownInterval = null;
 
-// ৪. সাউন্ড নোটিফিকেশন (Beep Sound)
+// ৩. সাউন্ড নোটিফিকেশন
 function playAlertSound() {
     try {
         let ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -51,7 +50,56 @@ function playAlertSound() {
     } catch(e){}
 }
 
-// ৫. Firebase থেকে রিয়েল-টাইম সিগন্যাল লিসেনিং
+// ৪. রিয়েল-টাইম অটোমেটিক র্যান্ডম সিগন্যাল জেনারেটর (Time-deterministic Random Generator)
+function checkAndAutoGenerateSignal() {
+    const now = Math.floor(Date.now() / 1000);
+
+    db.collection("active_signal").doc("current").get().then((doc) => {
+        let needNewSignal = false;
+
+        if (!doc.exists) {
+            needNewSignal = true;
+        } else {
+            let data = doc.data();
+            // যদি আগের সিগন্যালের মেয়াদ শেষ হয়ে যায় এবং আরও ১-৩ মিনিট র্যান্ডম ওয়েটিং পার হয়ে যায়
+            if (data.expireAt < now - (data.waitTime || 60)) {
+                needNewSignal = true;
+            }
+        }
+
+        if (needNewSignal) {
+            // র্যান্ডম পেয়ার ও ডিরেকশন নির্বাচন
+            let pair = otcPairs[Math.floor(Math.random() * otcPairs.length)];
+            let direction = Math.random() > 0.5 ? "CALL (UP) ⬆️" : "PUT (DOWN) ⬇️";
+            let durationMinutes = Math.floor(Math.random() * 6) + 5; // ৫ থেকে ১০ মিনিট মেয়াদ
+            let randomGapSeconds = Math.floor(Math.random() * 120) + 30; // পরবর্তী সিগন্যালের আগে ৩০ সে. থেকে ২ মি. র্যান্ডম গ্যাপ
+            
+            let expireAt = now + (durationMinutes * 60);
+            let isWin = Math.random() < 0.90; // ৯০% একিউরেসি
+
+            let newSignal = {
+                pair: pair,
+                direction: direction,
+                durationMin: durationMinutes,
+                expireAt: expireAt,
+                confidence: (Math.random() * (98.8 - 92.5) + 92.5).toFixed(1),
+                isWin: isWin,
+                waitTime: randomGapSeconds,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            // ডাটাবেজে আপডেট করা (যাতে পৃথিবীর সব ইউজার একসাথে র্যান্ডম সিগন্যালটি পায়)
+            db.collection("active_signal").doc("current").set(newSignal);
+            db.collection("signal_history").add(newSignal);
+        }
+    });
+}
+
+// ৫. প্রতি ৫ সেকেন্ড পর পর সার্ভার র্যান্ডম টাইম ইন্টারভাল চেক করবে
+setInterval(checkAndAutoGenerateSignal, 5000);
+checkAndAutoGenerateSignal();
+
+// ৬. ফায়ারবেস থেকে লাইভ সিগন্যাল সিংক্রোনাইজেশন
 db.collection("active_signal").doc("current").onSnapshot((doc) => {
     if (doc.exists) {
         let data = doc.data();
@@ -119,44 +167,12 @@ function renderWaitingCard() {
     card.innerHTML = `
         <div class="waiting-msg">
             <i class="fa-solid fa-circle-notch fa-spin"></i>
-            <p>লাইভ মার্কেট স্ক্যান হচ্ছে... গ্লোবাল সিগন্যাল জেনারেট হওয়া মাত্রই আপডেট হবে।</p>
+            <p>লাইভ মার্কেট স্ক্যান হচ্ছে... পরবর্তী সিগন্যাল যেকোনো মুহূর্তে জেনারেট হবে।</p>
         </div>
     `;
 }
 
-// ৬. অটোমেটিক সিগন্যাল জেনারেটর (Database Sync Engine)
-setInterval(() => {
-    db.collection("active_signal").doc("current").get().then((doc) => {
-        let now = Math.floor(Date.now() / 1000);
-        if (!doc.exists || (doc.data().expireAt < now - 15)) {
-            generateAndSaveSignal();
-        }
-    });
-}, 8000);
-
-function generateAndSaveSignal() {
-    let pair = otcPairs[Math.floor(Math.random() * otcPairs.length)];
-    let direction = Math.random() > 0.5 ? "CALL (UP) ⬆️" : "PUT (DOWN) ⬇️";
-    let durationMinutes = Math.floor(Math.random() * 11) + 5; // ৫ থেকে ১৫ মিনিট
-    let now = Math.floor(Date.now() / 1000);
-    let expireAt = now + (durationMinutes * 60);
-    let isWin = Math.random() < 0.90; // ৯০% একিউরেসি
-
-    let newSignal = {
-        pair: pair,
-        direction: direction,
-        durationMin: durationMinutes,
-        expireAt: expireAt,
-        confidence: (Math.random() * (98.8 - 92.5) + 92.5).toFixed(1),
-        isWin: isWin,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    };
-
-    db.collection("active_signal").doc("current").set(newSignal);
-    db.collection("signal_history").add(newSignal);
-}
-
-// ৭. হিস্ট্রি টেবিল ও স্ট্যাটস ফিল্টারিং
+// ৭. হিস্ট্রি টেবিল ও রিয়েলটাইম তথ্য অ্যাড
 function loadHistory() {
     const tbody = document.getElementById('history-tbody');
 
@@ -204,7 +220,7 @@ function loadHistory() {
 
 loadHistory();
 
-// ৮. সাইকোলজিক্যাল উইন নোটিফিকেশন টোস্ট
+// ৮. সাইকোলজিক্যাল উইনিং পপআপ টোস্ট
 const sampleUsers = ["@rahim_otc", "@shakil_trader", "@pro_trader99", "@sumon_binary", "@tanvir_vips", "@fahim_fx"];
 setInterval(() => {
     let randomUser = sampleUsers[Math.floor(Math.random() * sampleUsers.length)];
@@ -221,4 +237,3 @@ setInterval(() => {
         toast.classList.add('hidden');
     }, 4500);
 }, 22000);
-        
