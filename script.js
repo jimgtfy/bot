@@ -1,4 +1,4 @@
-// ১. Firebase Setup
+// 1. Firebase Initialization
 const firebaseConfig = {
   apiKey: "AIzaSyCjauNF6LfqnevzzgaxoI2LCM1H2Fk-rg",
   authDomain: "signal-bot-2.firebaseapp.com",
@@ -13,19 +13,18 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 let isSoundOn = true;
+const otcPairs = ["EUR/USD (OTC)", "GBP/USD (OTC)", "USD/JPY (OTC)", "AUD/USD (OTC)", "BTC/USD (OTC)", "ETH/USD (OTC)"];
 
-// ২. নেভিগেশন ও ফিল্টার
+// Navigation & Filters
 function switchTab(tabId, el) {
     document.querySelectorAll('.app-section').forEach(sec => sec.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-    
     document.getElementById('section-' + tabId).classList.add('active');
     if (el) el.classList.add('active');
 }
 
 function switchTabDirect(tabId) {
-    const navBtn = document.getElementById('btn-nav-' + tabId);
-    switchTab(tabId, navBtn);
+    switchTab(tabId, document.getElementById('btn-nav-' + tabId));
 }
 
 function filterAssets(type, btn) {
@@ -37,29 +36,20 @@ function toggleSound() {
     isSoundOn = !isSoundOn;
     const btn = document.getElementById('sound-toggle');
     const icon = document.getElementById('sound-icon');
-    
-    if (isSoundOn) {
-        btn.classList.add('active');
-        icon.className = 'fa-solid fa-volume-high';
-    } else {
-        btn.classList.remove('active');
-        icon.className = 'fa-solid fa-volume-xmark';
-    }
+    btn.className = isSoundOn ? 'sound-btn active' : 'sound-btn';
+    icon.className = isSoundOn ? 'fa-solid fa-volume-high' : 'fa-solid fa-volume-xmark';
 }
 
-// ৩. সাউন্ড চেইম (Beep Alert)
 function playBeepSound() {
     if (!isSoundOn) return;
     try {
         let ctx = new (window.AudioContext || window.webkitAudioContext)();
         let osc = ctx.createOscillator();
         let gain = ctx.createGain();
-        
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(880, ctx.currentTime); // High pitch notification
-        gain.gain.setValueAtTime(0.12, ctx.currentTime);
+        osc.frequency.setValueAtTime(880, ctx.currentTime);
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
-        
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start();
@@ -67,102 +57,124 @@ function playBeepSound() {
     } catch(e){}
 }
 
-// ৪. ক্লিপ্রবোর্ড কপি
 function copyAsset(assetName) {
     navigator.clipboard.writeText(assetName);
     alert('অ্যাসেট কপি করা হয়েছে: ' + assetName);
 }
 
-// ৫. লাইভ ঘড়ি
+// 2. Real-Time Clock
 setInterval(() => {
     document.getElementById('live-clock').innerText = new Date().toLocaleTimeString();
 }, 1000);
 
-const otcPairs = ["EUR/USD (OTC)", "GBP/USD (OTC)", "USD/JPY (OTC)", "AUD/USD (OTC)", "BTC/USD (OTC)", "ETH/USD (OTC)"];
+// Helper function to get Today's Date String (YYYY-MM-DD) for Daily History Separation
+function getTodayString() {
+    let d = new Date();
+    return `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`;
+}
+
+// 3. 24/7 Quantum Engine Core (Fixed 5/0 Minute Alignment + Random Durations)
+let currentSchedule = null;
+
+function masterSchedulerEngine() {
+    const now = new Date();
+    const currentSec = now.getSeconds();
+    const currentMin = now.getMinutes();
+
+    // Check if we are approaching a 5-minute mark (e.g. :05, :10, :15 ... :55, :00)
+    let isNext5Min = (currentMin + 1) % 5 === 0;
+    
+    // Check Pre-Signal Alert Phase (10 to 15 seconds before the 5-min mark)
+    if (isNext5Min && currentSec >= 45 && currentSec <= 50) {
+        if (!currentSchedule) {
+            let nextMin = currentMin + 1;
+            let pair = otcPairs[Math.floor(Math.random() * otcPairs.length)];
+            let durations = [5, 10, 15];
+            let durationMin = durations[Math.floor(Math.random() * durations.length)];
+            
+            currentSchedule = {
+                pair: pair,
+                direction: Math.random() > 0.5 ? "CALL (UP) ⬆️" : "PUT (DOWN) ⬇️",
+                durationMin: durationMin,
+                timeframe: `M${durationMin} (${durationMin} Minutes)`,
+                startTimeFormatted: `${now.getHours().toString().padStart(2,'0')}:${nextMin === 60 ? '00' : nextMin.toString().padStart(2,'0')}`,
+                entryPrice: (Math.random() * (1.1200 - 1.0500) + 1.0500).toFixed(5),
+                martingale: "M1 Only",
+                confidence: (Math.random() * (98.5 - 91.0) + 91.0).toFixed(1)
+            };
+            playBeepSound();
+        }
+        renderPreSignalAlert(currentSchedule, 60 - currentSec);
+        return;
+    }
+
+    // Check Signal Execution Start Phase (Exactly at :00 second of 5-min mark)
+    if (currentMin % 5 === 0 && currentSec <= 3 && currentSchedule) {
+        let startTime = Math.floor(Date.now() / 1000);
+        let expireAt = startTime + (currentSchedule.durationMin * 60);
+
+        let activeDoc = {
+            ...currentSchedule,
+            startTime: startTime,
+            expireAt: expireAt,
+            status: "IN_PROGRESS",
+            dateStr: getTodayString()
+        };
+
+        db.collection("active_signal").doc("current").set(activeDoc);
+        currentSchedule = null; // reset schedule
+        playBeepSound();
+        return;
+    }
+
+    // Reset Schedule Buffer after entry
+    if (currentMin % 5 !== 4) {
+        currentSchedule = null;
+    }
+}
+
+setInterval(masterSchedulerEngine, 1000);
+
+// 4. Firebase Active Signal Listener
 let activeSignal = null;
 let countdownInterval = null;
 
-// ৬. অটো সিগন্যাল জেনারেটর মেকানিজম
-function checkAndAutoGenerateSignal() {
-    const now = Math.floor(Date.now() / 1000);
-
-    db.collection("active_signal").doc("current").get().then((doc) => {
-        let needNewSignal = false;
-
-        if (!doc.exists) {
-            needNewSignal = true;
-        } else {
-            let data = doc.data();
-            if (data.expireAt < now - (data.waitTime || 35)) {
-                needNewSignal = true;
-            }
-        }
-
-        if (needNewSignal) {
-            let pair = otcPairs[Math.floor(Math.random() * otcPairs.length)];
-            let direction = Math.random() > 0.5 ? "CALL (UP) ⬆️" : "PUT (DOWN) ⬇️";
-            let durationMinutes = 5; // M5 time frame
-            let randomGapSeconds = Math.floor(Math.random() * 60) + 30; // ৩০-৯০ সেকেন্ড থিংকিং মুড গ্যাপ
-            let expireAt = now + (durationMinutes * 60);
-            let entryPrice = (Math.random() * (1.1200 - 1.0500) + 1.0500).toFixed(5);
-
-            let newSignal = {
-                pair: pair,
-                direction: direction,
-                timeframe: "M5 (5 Minutes)",
-                durationMin: durationMinutes,
-                expireAt: expireAt,
-                entryPrice: entryPrice,
-                martingale: "M1 Only",
-                confidence: (Math.random() * (98.8 - 92.5) + 92.5).toFixed(1),
-                status: "IN_PROGRESS",
-                waitTime: randomGapSeconds,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            };
-
-            db.collection("active_signal").doc("current").set(newSignal);
-        }
-    });
-}
-
-setInterval(checkAndAutoGenerateSignal, 5000);
-checkAndAutoGenerateSignal();
-
-// ৭. ফায়ারবেস স্ন্যাপশট ও রেজাল্ট হ্যান্ডলিং
 db.collection("active_signal").doc("current").onSnapshot((doc) => {
     if (doc.exists) {
         let data = doc.data();
         let now = Math.floor(Date.now() / 1000);
         let remaining = data.expireAt - now;
 
-        if (remaining > 0) {
-            if (!activeSignal || activeSignal.expireAt !== data.expireAt) {
-                playBeepSound();
-            }
+        if (remaining > 0 && data.status === "IN_PROGRESS") {
             activeSignal = { ...data, remainingSec: remaining };
             startCountdown();
         } else {
-            if (activeSignal) {
+            if (activeSignal && activeSignal.status === "IN_PROGRESS") {
                 finalizeResult(activeSignal);
             }
             activeSignal = null;
             clearInterval(countdownInterval);
-            renderThinkingMode(); // থিংকিং মুড শো করবে
+            if (!currentSchedule) renderThinkingMode();
         }
     } else {
-        renderThinkingMode();
+        if (!currentSchedule) renderThinkingMode();
     }
 });
 
 function finalizeResult(signalData) {
-    let isWin = Math.random() < 0.91; // ৯১% উইন চান্স
+    // 88% to 92% Win Rate Enforcement Logic
+    let isWin = Math.random() < 0.90; 
+
     let closedSignal = {
         ...signalData,
         status: "COMPLETED",
         isWin: isWin,
+        dateStr: getTodayString(),
         timestamp: firebase.firestore.FieldValue.serverTimestamp()
     };
+    
     db.collection("signal_history").add(closedSignal);
+    db.collection("active_signal").doc("current").update({ status: "COMPLETED" });
 }
 
 function startCountdown() {
@@ -177,14 +189,16 @@ function startCountdown() {
             clearInterval(countdownInterval);
             finalizeResult(activeSignal);
             activeSignal = null;
-            renderThinkingMode();
+            if (!currentSchedule) renderThinkingMode();
         } else {
             renderActiveCard();
         }
     }, 1000);
 }
 
-// ৮. ইউআই রেন্ডারার (Quotex Blueprint Active Card)
+// 5. UI Renderers
+
+// A. Active Trade Card Blueprint
 function renderActiveCard() {
     const container = document.getElementById('active-signal-container');
     let isCall = activeSignal.direction.includes("CALL");
@@ -215,7 +229,7 @@ function renderActiveCard() {
                     <strong class="mono">${activeSignal.entryPrice}</strong>
                 </div>
                 <div class="grid-cell">
-                    <span>⏳ Expires In</span>
+                    <span>⏳ Time Remaining</span>
                     <strong class="mono" style="color:#FFD600;">${timeFormatted} Min</strong>
                 </div>
                 <div class="grid-cell">
@@ -229,14 +243,28 @@ function renderActiveCard() {
             </div>
 
             <div class="card-footer-info">
-                <span>Status: <b style="color:#FFD600;"><i class="fa-solid fa-spinner fa-spin"></i> LIVE EXECUTION</b></span>
+                <span>Status: <b style="color:#FFD600;"><i class="fa-solid fa-spinner fa-spin"></i> TRADE RUNNING</b></span>
                 <span>Quotex Quantum Engine v2.4</span>
             </div>
         </div>
     `;
 }
 
-// ৯. থিংকিং মুড রেন্ডারার (Thinking Mode UI)
+// B. Pre-Signal Alert (10-15s Warning)
+function renderPreSignalAlert(schedule, secondsLeft) {
+    const container = document.getElementById('active-signal-container');
+    container.innerHTML = `
+        <div class="pre-signal-alert">
+            <h3><i class="fa-solid fa-triangle-exclamation"></i> UPCOMING TRADE ALERT</h3>
+            <p>প্রস্তুত থাকুন! আগামী <b>${secondsLeft} সেকেন্ডের</b> মধ্যে ট্রেড শট আসছে:</p>
+            <div style="font-size: 22px; font-weight:800; color:#fff;" class="mono">
+                ${schedule.pair} — ${schedule.timeframe}
+            </div>
+        </div>
+    `;
+}
+
+// C. Thinking Mode UI (Indicators + AI + Quantum Engine)
 function renderThinkingMode() {
     const container = document.getElementById('active-signal-container');
     container.innerHTML = `
@@ -246,32 +274,52 @@ function renderThinkingMode() {
                 <div class="radar-sweep"></div>
                 <i class="fa-solid fa-brain ai-brain-icon"></i>
             </div>
-            <h3><i class="fa-solid fa-microchip" style="color:var(--quotex-green);"></i> AI Market Analysis in Progress...</h3>
-            <p>আমাদের কোয়ান্ট অ্যালগরিদম গভীরতম ক্যান্ডেলস্টিক প্যাটার্ন এবং ভলিউম স্ক্যান করছে। নতুন সিগন্যাল যেকোনো মুহূর্তে আসছে...</p>
+            <h3>Quantum Engine Analysis in Progress...</h3>
+            <p>আমাদের AI ইঞ্জিন গ্লোবাল ইন্ডিকেটর ও অ্যালগরিদম স্ক্যান করে পরবর্তী ট্রেডের জন্য কনফার্মেশন নিচ্ছে...</p>
             
-            <div class="scanned-assets">
-                <span class="asset-pill"><i class="fa-solid fa-spinner fa-spin"></i> EUR/USD</span>
-                <span class="asset-pill"><i class="fa-solid fa-spinner fa-spin"></i> GBP/USD</span>
-                <span class="asset-pill"><i class="fa-solid fa-spinner fa-spin"></i> BTC/USD</span>
-                <span class="asset-pill"><i class="fa-solid fa-spinner fa-spin"></i> AUD/USD</span>
+            <div class="conformation-grid">
+                <div class="conf-item">
+                    <span><i class="fa-solid fa-chart-line"></i> RSI & Stochastic:</span>
+                    <strong>ANALYZING...</strong>
+                </div>
+                <div class="conf-item">
+                    <span><i class="fa-solid fa-layer-group"></i> Bollinger Bands:</span>
+                    <strong>SCANNING OTC...</strong>
+                </div>
+                <div class="conf-item">
+                    <span><i class="fa-solid fa-robot"></i> AI Conformation:</span>
+                    <strong>94.2% MATCH</strong>
+                </div>
+                <div class="conf-item">
+                    <span><i class="fa-solid fa-microchip"></i> Quantum Engine:</span>
+                    <strong>SEARCHING ENTRY</strong>
+                </div>
             </div>
         </div>
     `;
 }
 
-// ১০. হিস্ট্রি টেবিল ও প্রসেসড কার্ড লোড
-function loadHistory() {
+// 6. History & Stats Engine (Reset Daily at 12:00 AM)
+function loadTodayHistory() {
     const tbody = document.getElementById('history-tbody');
     const procGrid = document.getElementById('processed-cards-grid');
+    let todayStr = getTodayString();
 
-    db.collection("signal_history").orderBy("timestamp", "desc").limit(30).onSnapshot((snapshot) => {
+    db.collection("signal_history")
+      .where("dateStr", "==", todayStr)
+      .orderBy("timestamp", "desc")
+      .onSnapshot((snapshot) => {
         tbody.innerHTML = '';
         procGrid.innerHTML = '';
         let total = 0, wins = 0, losses = 0;
 
         if (snapshot.empty) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#90A4AE;">কোনো রেকর্ড পাওয়া যায়নি।</td></tr>';
-            procGrid.innerHTML = '<p class="no-data">কোনো সমাপ্ত সিগন্যাল লোড হয়নি...</p>';
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#90A4AE;">আজকে এখন পর্যন্ত কোনো সিগন্যাল সমাপ্ত হয়নি।</td></tr>';
+            procGrid.innerHTML = '<p class="no-data">আজকের সমাপ্ত সিগন্যালগুলো এখানে দেখাবে...</p>';
+            document.getElementById('total-count').innerText = 0;
+            document.getElementById('win-count').innerText = 0;
+            document.getElementById('loss-count').innerText = 0;
+            document.getElementById('win-rate').innerText = "0%";
             return;
         }
 
@@ -285,7 +333,6 @@ function loadHistory() {
 
             let dateObj = data.timestamp ? data.timestamp.toDate() : new Date();
             let timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            let dateStr = dateObj.toLocaleDateString();
 
             // Table Row
             let tr = document.createElement('tr');
@@ -294,7 +341,7 @@ function loadHistory() {
 
             tr.innerHTML = `
                 <td>${i--}</td>
-                <td class="mono">${dateStr} ${timeStr}</td>
+                <td class="mono">${data.startTimeFormatted || timeStr}</td>
                 <td><b>${data.pair}</b></td>
                 <td style="${dirStyle}">${data.direction}</td>
                 <td>${data.timeframe}</td>
@@ -309,7 +356,7 @@ function loadHistory() {
                 div.innerHTML = `
                     <div>
                         <strong>${data.pair}</strong>
-                        <span>${timeStr} | ${data.direction}</span>
+                        <span>${data.startTimeFormatted || timeStr} | ${data.direction}</span>
                     </div>
                     ${resBadge}
                 `;
@@ -326,23 +373,5 @@ function loadHistory() {
     });
 }
 
-loadHistory();
-
-// ১১. টোস্ট নোটিফিকেশন
-setInterval(() => {
-    const sampleUsers = ["@trader_rakib", "@sumon_fx", "@quotex_pro", "@binary_king", "@tanvir_vip"];
-    let randomUser = sampleUsers[Math.floor(Math.random() * sampleUsers.length)];
-    let randomPair = otcPairs[Math.floor(Math.random() * otcPairs.length)];
-    let randomAmount = Math.floor(Math.random() * 220) + 50;
-
-    document.getElementById('toast-user').innerText = randomUser;
-    document.getElementById('toast-text').innerText = `${randomPair}-এ $${randomAmount} প্রফিট করেছেন!`;
-
-    const toast = document.getElementById('live-win-toast');
-    toast.classList.remove('hidden');
-
-    setTimeout(() => {
-        toast.classList.add('hidden');
-    }, 4000);
-}, 22000);
-              
+loadTodayHistory();
+      
