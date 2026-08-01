@@ -1,100 +1,164 @@
-// ১. ঘড়ি আপডেট ফাংশন
+// ১. লাইভ ক্লক
 function updateClock() {
-    const now = new Date();
-    document.getElementById('live-clock').innerText = now.toLocaleTimeString();
+    document.getElementById('live-clock').innerText = new Date().toLocaleTimeString();
 }
 setInterval(updateClock, 1000);
 updateClock();
 
-// ২. ডাটা সেটআপ (৫০টি অটো সিগন্যাল জেনারেটর)
-const assets = ["EUR/USD (OTC)", "GBP/USD (OTC)", "USD/JPY (OTC)", "AUD/CAD (OTC)", "EUR/GBP (OTC)", "BTC/USD"];
-const directions = ["CALL (UP) ⬆️", "PUT (DOWN) ⬇️"];
+// ২. কেবল নির্ধারিত ৬টি OTC পেয়ার
+const otcPairs = [
+    "EUR/USD (OTC)", 
+    "GBP/USD (OTC)", 
+    "USD/JPY (OTC)", 
+    "AUD/USD (OTC)", 
+    "EUR/GBP (OTC)", 
+    "USD/CHF (OTC)"
+];
 
-let signals = [];
+let totalSignals = 0;
 let wins = 0;
 let losses = 0;
+let activeSignal = null;
+let countdownTimer = null;
 
-function generateDailySignals() {
-    const now = new Date();
-    // আজকের সকাল ৯:০০ টা থেকে শুরু
-    let startTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 9, 0, 0);
+// সাউন্ড প্লেয়ার (বিপ অ্যালার্ট)
+function playAlertSound() {
+    try {
+        let ctx = new (window.AudioContext || window.webkitAudioContext)();
+        let osc = ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, ctx.currentTime);
+        osc.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.3);
+    } catch(e){}
+}
 
-    for (let i = 1; i <= 50; i++) {
-        // প্রতি সিগন্যালে ১০ মিনিট করে সময় বাড়বে
-        let signalTime = new Date(startTime.getTime() + i * 10 * 60000);
-        
-        let asset = assets[Math.floor(Math.random() * assets.length)];
-        let direction = directions[Math.floor(Math.random() * directions.length)];
-        
-        // রেজাল্ট সিমুলেশন: ৮০% সম্ভাবনা উইন হওয়ার
-        let isWin = Math.random() < 0.8;
-        let result = isWin ? "WIN" : "LOSS";
+// ৩. নতুন সিগন্যাল জেনারেট লজিক
+function triggerNewSignal() {
+    if (activeSignal) return; // ইতিমধ্যে সিগন্যাল চললে নতুন দেবে না
 
-        signals.push({
-            id: i,
-            timeObj: signalTime,
-            timeStr: signalTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            asset: asset,
-            direction: direction,
-            timeframe: "1 MIN",
-            result: result
-        });
+    totalSignals++;
+    let pair = otcPairs[Math.floor(Math.random() * otcPairs.length)];
+    let direction = Math.random() > 0.5 ? "CALL (UP) ⬆️" : "PUT (DOWN) ⬇️";
+    
+    // ৫ থেকে ১৫ মিনিটের মধ্যে র‍্যান্ডম মেয়াদ
+    let durationMinutes = Math.floor(Math.random() * 11) + 5; 
+    let durationSeconds = durationMinutes * 60;
+
+    // ১৮/২০ উইন লজিক (৯০% পার্সেন্টেজ নিশ্চিত করা)
+    let isWin = Math.random() < 0.90; 
+
+    activeSignal = {
+        id: totalSignals,
+        timeStr: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        pair: pair,
+        direction: direction,
+        durationMin: durationMinutes,
+        remainingSec: durationSeconds,
+        isWin: isWin
+    };
+
+    playAlertSound();
+    renderActiveCard();
+
+    // টাইমার শুরু
+    countdownTimer = setInterval(updateTimer, 1000);
+}
+
+// ৪. অ্যাক্টিভ কার্ড আপডেট
+function renderActiveCard() {
+    const card = document.getElementById('active-signal-card');
+    card.classList.remove('empty');
+
+    let dirClass = activeSignal.direction.includes("CALL") ? "call" : "put";
+    let min = Math.floor(activeSignal.remainingSec / 60);
+    let sec = activeSignal.remainingSec % 60;
+    let timeFormatted = `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+
+    card.innerHTML = `
+        <div class="signal-details">
+            <div class="pair-title">${activeSignal.pair}</div>
+            <div class="dir-badge ${dirClass}">${activeSignal.direction}</div>
+            <div class="timer-box"><i class="fa-solid fa-stopwatch"></i> ${timeFormatted}</div>
+        </div>
+        <p style="margin-top:15px; color:#787b86; font-size:13px;">
+            মেয়াদ: <b>${activeSignal.durationMin} Minutes</b> | এন্ট্রি টাইম: <b>${activeSignal.timeStr}</b>
+        </p>
+    `;
+}
+
+// ৫. টাইমার ও রেজাল্ট প্রসেসিং
+function updateTimer() {
+    if (!activeSignal) return;
+
+    activeSignal.remainingSec--;
+
+    if (activeSignal.remainingSec <= 0) {
+        clearInterval(countdownTimer);
+        finishSignal();
+    } else {
+        renderActiveCard();
     }
 }
 
-// ৩. টেবিলে সিগন্যাল রেন্ডার ও রেজাল্ট প্রসেসিং
-function renderTable() {
-    const tbody = document.getElementById('signal-table-body');
-    tbody.innerHTML = '';
-    const now = new Date();
+function finishSignal() {
+    if (activeSignal.isWin) {
+        wins++;
+    } else {
+        losses++;
+    }
 
-    wins = 0;
-    losses = 0;
+    addToHistory(activeSignal);
+    updateStats();
 
-    signals.forEach(sig => {
-        const tr = document.createElement('tr');
-        
-        let statusHTML = '';
-        
-        // সিগন্যালের সময় পার হয়ে গেছে কিনা যাচাই
-        if (now >= sig.timeObj) {
-            if (sig.result === "WIN") {
-                wins++;
-                statusHTML = `<span class="res-win"><i class="fa-solid fa-check"></i> WIN</span>`;
-            } else {
-                losses++;
-                statusHTML = `<span class="res-loss"><i class="fa-solid fa-xmark"></i> LOSS</span>`;
-            }
-        } else {
-            statusHTML = `<span class="res-pending"><i class="fa-solid fa-hourglass-half"></i> UPCOMING</span>`;
-        }
+    activeSignal = null;
 
-        let dirClass = sig.direction.includes("CALL") ? "call" : "put";
+    // কার্ড খালি করা
+    const card = document.getElementById('active-signal-card');
+    card.classList.add('empty');
+    card.innerHTML = `
+        <div class="waiting-msg">
+            <i class="fa-solid fa-circle-notch fa-spin"></i>
+            <p>সিগন্যাল সমাপ্ত হয়েছে। নতুন অপরচুনিটির জন্য মার্কেট এনালাইসিস চলছে...</p>
+        </div>
+    `;
 
-        tr.innerHTML = `
-            <td>${sig.id}</td>
-            <td><strong>${sig.timeStr}</strong></td>
-            <td>${sig.asset}</td>
-            <td class="${dirClass}">${sig.direction}</td>
-            <td>${sig.timeframe}</td>
-            <td>${statusHTML}</td>
-        `;
+    // পরবর্তী সিগন্যাল ১০ থেকে ৩০ সেকেন্ড পর আসবে (টেস্টিং সহজ করার জন্য কমানো হয়েছে)
+    setTimeout(triggerNewSignal, Math.floor(Math.random() * 20000) + 10000);
+}
 
-        tbody.appendChild(tr);
-    });
+// ৬. হিস্ট্রি টেবিলে যুক্ত করা
+function addToHistory(sig) {
+    const tbody = document.getElementById('history-tbody');
+    if (totalSignals === 1) tbody.innerHTML = ''; 
 
-    // সামারি আপডেট
+    const tr = document.createElement('tr');
+    let dirClass = sig.direction.includes("CALL") ? "color:#00e676; font-weight:bold;" : "color:#ff3d00; font-weight:bold;";
+    let resBadge = sig.isWin ? '<span class="res-win">WIN</span>' : '<span class="res-loss">LOSS</span>';
+
+    tr.innerHTML = `
+        <td>${sig.id}</td>
+        <td>${sig.timeStr}</td>
+        <td><b>${sig.pair}</b></td>
+        <td style="${dirClass}">${sig.direction}</td>
+        <td>${sig.durationMin} MIN</td>
+        <td>${resBadge}</td>
+    `;
+
+    tbody.insertBefore(tr, tbody.firstChild);
+}
+
+// ৭. স্ট্যাটস আপডেট
+function updateStats() {
+    document.getElementById('total-count').innerText = totalSignals;
     document.getElementById('win-count').innerText = wins;
     document.getElementById('loss-count').innerText = losses;
-    
+
     let processed = wins + losses;
-    let rate = processed > 0 ? ((wins / processed) * 100).toFixed(1) : 0;
+    let rate = processed > 0 ? ((wins / processed) * 100).toFixed(1) : 100;
     document.getElementById('win-rate').innerText = rate + "%";
 }
 
-// ৪. ইনিশিয়ালাইজেশন
-generateDailySignals();
-renderTable();
-
-// প্রতি ৩০ সেকেন্ড পরপর ওয়েবসাইট অটো আপডেট হবে (লাইভ সিগন্যাল রেজাল্টের জন্য)
-setInterval(renderTable, 30000);
+// প্রথম সিগন্যাল ৫ সেকেন্ড পর শুরু হবে
+setTimeout(triggerNewSignal, 5000);
