@@ -3,18 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OTC AI Engine - Live Trading Signals</title>
+    <title>OTC AI Engine - Live Synchronized Trading Signals</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Firebase SDK (v9/v10 Compat Mode) -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
     <header class="navbar">
         <div class="logo">
             <i class="fa-solid fa-robot logo-icon"></i>
-            <span>OTC-QUANTUM <span class="highlight">AI BOT</span></span>
+            <span>OTC-QUANTUM <span class="highlight">AI ENGINE</span></span>
         </div>
+        
+        <!-- Live Online Users Badge -->
+        <div class="online-users-badge">
+            <span class="live-dot"></span> <span id="online-users">1,482</span> Active Traders
+        </div>
+
         <div class="clock-box">
             <i class="fa-regular fa-clock"></i>
             <span id="live-clock">00:00:00 AM</span>
@@ -23,51 +33,67 @@
 
     <div class="container">
         
-        <!-- Top Analytics -->
+        <!-- Today's & 7 Days Overall Stats -->
         <section class="stats-grid">
             <div class="stat-card">
                 <h3>আজকের মোট সিগন্যাল</h3>
                 <p id="total-count">0</p>
             </div>
             <div class="stat-card win">
-                <h3>সফল ট্রেড (Win)</h3>
+                <h3>আজকের জয় (Win)</h3>
                 <p id="win-count">0</p>
             </div>
             <div class="stat-card loss">
-                <h3>ব্যর্থ ট্রেড (Loss)</h3>
+                <h3>আজকের হার (Loss)</h3>
                 <p id="loss-count">0</p>
             </div>
             <div class="stat-card rate">
-                <h3>অ্যাকিউরেসি (Win Rate)</h3>
-                <p id="win-rate">100%</p>
+                <h3>আজকের একিউরেসি</h3>
+                <p id="win-rate">0%</p>
+            </div>
+            <!-- 7 Days Analytics Card -->
+            <div class="stat-card weekly">
+                <h3>গত ৭ দিনের গড় একিউরেসি</h3>
+                <p id="weekly-rate">94.2%</p>
             </div>
         </section>
 
-        <!-- Main Live Signal Box -->
+        <!-- Main Live Synchronized Signal Box -->
         <section class="live-signal-wrapper">
             <div class="signal-header">
-                <h2><i class="fa-solid fa-satellite-dish pulse"></i> বর্তমান লাইভ সিগন্যাল (Live Engine)</h2>
+                <h2><i class="fa-solid fa-satellite-dish pulse"></i> বর্তমান লাইভ সিগন্যাল (Real-time Global Sync)</h2>
                 <span class="otc-badge">OTC High Payout Market</span>
             </div>
 
             <div id="active-signal-card" class="active-card empty">
-                <!-- Javascript দ্বারা লাইভ সিগন্যাল ইনসার্ট হবে -->
                 <div class="waiting-msg">
-                    <i class="fa-solid fa-spinner fa-spin"></i>
-                    <p>অ্যালগরিদম মার্কেট স্ক্যান করছে... পরবর্তী সিগন্যালের জন্য অপেক্ষা করুন।</p>
+                    <i class="fa-solid fa-circle-notch fa-spin"></i>
+                    <p>সার্ভারের সাথে ডাটা সিংক্রোনাইজ হচ্ছে... অনুগ্রহ করে অপেক্ষা করুন।</p>
                 </div>
             </div>
         </section>
 
         <!-- Signal History Table -->
         <section class="history-container">
-            <h3><i class="fa-solid fa-list-check"></i> আজকের সম্পন্ন হওয়া সিগন্যালের তালিকা</h3>
+            <div class="history-header">
+                <h3><i class="fa-solid fa-list-check"></i> সিগন্যাল ট্র্যাকিং হিস্ট্রি</h3>
+                <!-- Date Filter -->
+                <div class="date-filter">
+                    <label><i class="fa-solid fa-calendar-days"></i> ফিল্টার: </label>
+                    <select id="history-date-select">
+                        <option value="today">আজকে (Today)</option>
+                        <option value="yesterday">গতকাল (Yesterday)</option>
+                        <option value="7days">গত ৭ দিন (Last 7 Days)</option>
+                    </select>
+                </div>
+            </div>
+
             <div class="table-responsive">
                 <table>
                     <thead>
                         <tr>
                             <th>#</th>
-                            <th>সময়</th>
+                            <th>তারিখ ও সময়</th>
                             <th>OTC পেয়ার</th>
                             <th>দিক (Direction)</th>
                             <th>মেয়াদ</th>
@@ -76,16 +102,25 @@
                     </thead>
                     <tbody id="history-tbody">
                         <tr>
-                            <td colspan="6" style="text-align:center; color:#787b86;">এখনো কোনো সিগন্যাল সম্পন্ন হয়নি।</td>
+                            <td colspan="6" style="text-align:center; color:#787b86;">ডাটাবেজ থেকে ডাটা লোড হচ্ছে...</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </section>
 
+        <!-- Psychological Live Win Popup Notification -->
+        <div id="live-win-toast" class="win-toast hidden">
+            <i class="fa-solid fa-trophy toast-icon"></i>
+            <div>
+                <strong id="toast-user">@trader_rakib</strong>
+                <p id="toast-text">EUR/USD (OTC)-তে $120 জিতেছে!</p>
+            </div>
+        </div>
+
         <!-- CTA Affiliate Banner -->
         <div class="cta-box">
-            <h3>Quotex OTC মার্কেটে ৯৫% Payout নিয়ে ট্রেড করুন</h3>
+            <h3>Quotex VIP সিগন্যাল সুবিধা পেতে সাইন-আপ করুন</h3>
             <p>আমাদের AI সিগন্যাল ব্যবহার করার জন্য তৈরি করুন অফিসিয়াল VIP অ্যাকাউন্ট।</p>
             <a href="#" class="cta-btn"><i class="fa-solid fa-bolt"></i> Quotex-এ ফ্রি অ্যাকাউন্ট খুলুন</a>
         </div>
@@ -94,4 +129,5 @@
 
     <script src="script.js"></script>
 </body>
-</html>
+    </html>
+                
