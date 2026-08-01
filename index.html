@@ -3,19 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Quantum Signals - Quotex Daily Trading Signals</title>
+    <title>OTC AI Engine - Live Trading Signals</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Google Font & FontAwesome Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 
-    <!-- Header Section -->
     <header class="navbar">
         <div class="logo">
-            <i class="fa-solid fa-chart-line logo-icon"></i>
-            <span>QUANTUM<span class="highlight">SIGNALS</span></span>
+            <i class="fa-solid fa-robot logo-icon"></i>
+            <span>OTC-QUANTUM <span class="highlight">AI BOT</span></span>
         </div>
         <div class="clock-box">
             <i class="fa-regular fa-clock"></i>
@@ -25,70 +23,74 @@
 
     <div class="container">
         
-        <!-- Banner Announcement -->
-        <div class="announcement">
-            <i class="fa-solid fa-robot"></i> 
-            <span>আজকের ৫০টি আলগোরিথমিক সিগন্যাল নিচে লাইভ আপডেট হচ্ছে। সময় অনুযায়ী ট্রেড সম্পাদন করুন।</span>
-        </div>
-
-        <!-- Dashboard Analytics Bar -->
+        <!-- Top Analytics -->
         <section class="stats-grid">
             <div class="stat-card">
-                <h3>মোট সিগন্যাল</h3>
-                <p id="total-signals">50</p>
+                <h3>আজকের মোট সিগন্যাল</h3>
+                <p id="total-count">0</p>
             </div>
             <div class="stat-card win">
-                <h3>মোট জয় (Win)</h3>
+                <h3>সফল ট্রেড (Win)</h3>
                 <p id="win-count">0</p>
             </div>
             <div class="stat-card loss">
-                <h3>মোট হার (Loss)</h3>
+                <h3>ব্যর্থ ট্রেড (Loss)</h3>
                 <p id="loss-count">0</p>
             </div>
             <div class="stat-card rate">
-                <h3>সফলতার হার (Win Rate)</h3>
-                <p id="win-rate">0%</p>
+                <h3>অ্যাকিউরেসি (Win Rate)</h3>
+                <p id="win-rate">100%</p>
             </div>
         </section>
 
-        <!-- Signal Table Section -->
-        <section class="signals-container">
-            <div class="table-header">
-                <h2><i class="fa-solid fa-bolt"></i> আজকের ৫০টি সিগন্যালের তালিকা</h2>
-                <span class="badge live-badge"><i class="fa-solid fa-circle"></i> LIVE ENGINE</span>
+        <!-- Main Live Signal Box -->
+        <section class="live-signal-wrapper">
+            <div class="signal-header">
+                <h2><i class="fa-solid fa-satellite-dish pulse"></i> বর্তমান লাইভ সিগন্যাল (Live Engine)</h2>
+                <span class="otc-badge">OTC High Payout Market</span>
             </div>
 
+            <div id="active-signal-card" class="active-card empty">
+                <!-- Javascript দ্বারা লাইভ সিগন্যাল ইনসার্ট হবে -->
+                <div class="waiting-msg">
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+                    <p>অ্যালগরিদম মার্কেট স্ক্যান করছে... পরবর্তী সিগন্যালের জন্য অপেক্ষা করুন।</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Signal History Table -->
+        <section class="history-container">
+            <h3><i class="fa-solid fa-list-check"></i> আজকের সম্পন্ন হওয়া সিগন্যালের তালিকা</h3>
             <div class="table-responsive">
                 <table>
                     <thead>
                         <tr>
                             <th>#</th>
-                            <th>সময় (Time)</th>
-                            <th>অ্যাসেট (Asset)</th>
+                            <th>সময়</th>
+                            <th>OTC পেয়ার</th>
                             <th>দিক (Direction)</th>
-                            <th>মেয়াদ (Timeframe)</th>
-                            <th>স্ট্যাটাস/ফলাফল</th>
+                            <th>মেয়াদ</th>
+                            <th>ফলাফল</th>
                         </tr>
                     </thead>
-                    <tbody id="signal-table-body">
-                        <!-- JavaScript দিয়ে অটো জেনারেট হবে -->
+                    <tbody id="history-tbody">
+                        <tr>
+                            <td colspan="6" style="text-align:center; color:#787b86;">এখনো কোনো সিগন্যাল সম্পন্ন হয়নি।</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
         </section>
 
-        <!-- Call To Action / Affiliate Banner -->
+        <!-- CTA Affiliate Banner -->
         <div class="cta-box">
-            <h3>এখনো Quotex অ্যাকাউন্ট তৈরি করেননি?</h3>
-            <p>আমাদের VIP সিগন্যাল ব্যবহার করার জন্য তৈরি করুন অফিসিয়াল অ্যাকাউন্ট।</p>
-            <a href="#" class="cta-btn"><i class="fa-solid fa-user-plus"></i> Quotex-এ ফ্রি অ্যাকাউন্ট খুলুন</a>
+            <h3>Quotex OTC মার্কেটে ৯৫% Payout নিয়ে ট্রেড করুন</h3>
+            <p>আমাদের AI সিগন্যাল ব্যবহার করার জন্য তৈরি করুন অফিসিয়াল VIP অ্যাকাউন্ট।</p>
+            <a href="#" class="cta-btn"><i class="fa-solid fa-bolt"></i> Quotex-এ ফ্রি অ্যাকাউন্ট খুলুন</a>
         </div>
 
     </div>
-
-    <footer>
-        <p>© 2026 AI Quantum Signals. All rights reserved. Trading carries financial risk.</p>
-    </footer>
 
     <script src="script.js"></script>
 </body>
