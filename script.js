@@ -1,62 +1,79 @@
 // ==========================================
-// QUANTUM AI - LIVING SCANNER ENGINE (v3.0)
+// QUANTUM AI - FINAL LOGIC (Working Timer & Modules)
 // ==========================================
 
-// 1. NAVIGATION TAB SWITCHER
+// 1. Tab Switcher Logic
 function switchTab(tabId, el) {
     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
 
     document.getElementById(`tab-${tabId}`).classList.add('active');
-    if(el) el.classList.add('active');
+    if(el) { el.classList.add('active'); }
 }
 
-// 2. ACTIVE TRADERS SIMULATION (DYNAMIC PEAK TRAFFIC)
-function updateTradersCount() {
+// 2. Sound Toggle Logic
+const soundBtn = document.getElementById('sound-btn');
+let isSoundOn = true;
+soundBtn.addEventListener('click', () => {
+    isSoundOn = !isSoundOn;
+    if(isSoundOn) {
+        soundBtn.classList.add('active');
+        soundBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+    } else {
+        soundBtn.classList.remove('active');
+        soundBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
+    }
+});
+
+// 3. Dynamic Traders Simulator
+setInterval(() => {
     const el = document.getElementById('active-traders-count');
-    if (!el) return;
-    
-    let now = new Date();
-    let hours = now.getHours();
-    let base = (hours >= 18 && hours <= 22) ? 220 : 120; // Peak traffic in evening
     let current = parseInt(el.innerText);
-    let shift = Math.floor(Math.random() * 9) - 4; // -4 to +4 random shift
+    let shift = Math.floor(Math.random() * 7) - 3; 
+    el.innerText = Math.max(80, current + shift);
+}, 4000);
+
+// 4. Live Countdown Timer Logic (NEW)
+let timeLeft = 45; // Start at 45 seconds for demo
+const timerText = document.getElementById('countdown-timer');
+const timerBar = document.getElementById('timer-bar');
+
+setInterval(() => {
+    timeLeft--;
+    if(timeLeft < 0) timeLeft = 59; // Reset to 59s when hits 0
     
-    let updated = Math.max(25, current + shift);
-    el.innerText = updated;
-}
-setInterval(updateTradersCount, 4000);
+    // Format to 00:XX
+    let displayTime = timeLeft < 10 ? `00:0${timeLeft}` : `00:${timeLeft}`;
+    if (timerText) timerText.innerText = displayTime;
+    
+    // Decrease Bar Width
+    let widthPct = (timeLeft / 59) * 100;
+    if (timerBar) timerBar.style.width = `${widthPct}%`;
 
-// 3. LIVING SCANNER: MICRO-TICKS ORDER BOOK DYNAMIC ANIMATION
-function updateOrderBook() {
+    // Change color when time is critical (<10s)
+    if(timeLeft < 10 && timerBar) {
+        timerBar.style.background = 'var(--trade-red)';
+        timerText.style.background = 'var(--trade-red)';
+        timerText.style.color = '#FFF';
+    } else if (timerBar) {
+        timerBar.style.background = 'var(--brand-gold)';
+        timerText.style.background = 'var(--brand-gold)';
+        timerText.style.color = '#000';
+    }
+}, 1000);
+
+// 5. Living Scanner: Order Book Micro-ticks
+setInterval(() => {
     const askPrices = document.querySelectorAll('.ask-price');
-    const askVolumes = document.querySelectorAll('.ask-vol');
     const bidPrices = document.querySelectorAll('.bid-price');
-    const bidVolumes = document.querySelectorAll('.bid-vol');
-
     let basePrice = 1.08535 + (Math.random() * 0.00010);
 
-    // Update Ask Lines (Red)
-    askPrices.forEach((el, index) => {
-        let p = (basePrice + (0.00004 * (index + 1))).toFixed(5);
-        let v = (Math.floor(Math.random() * 500) * 100 + 10000).toLocaleString();
-        el.innerText = p;
-        if(askVolumes[index]) askVolumes[index].innerText = `${v} USD`;
-    });
+    askPrices.forEach((el, i) => el.innerText = (basePrice + (0.00004 * (i + 1))).toFixed(5));
+    bidPrices.forEach((el, i) => el.innerText = (basePrice - (0.00003 * i)).toFixed(5));
+}, 700);
 
-    // Update Bid Lines (Green)
-    bidPrices.forEach((el, index) => {
-        let p = (basePrice - (0.00003 * index)).toFixed(5);
-        let v = (Math.floor(Math.random() * 800) * 100 + 15000).toLocaleString();
-        el.innerText = p;
-        if(bidVolumes[index]) bidVolumes[index].innerText = `${v} USD`;
-    });
-}
-setInterval(updateOrderBook, 600); // Ticks update every 600ms
-
-// 4. LIVING SCANNER: INDICATOR BARS & LATENCY FLUIDITY
-function animateIndicators() {
-    // RSI Random Fluctuation (Oversold Range)
+// 6. Living Scanner: Indicator Fluidity
+setInterval(() => {
     const rsiValEl = document.getElementById('rsi-val');
     const rsiBarEl = document.getElementById('rsi-bar');
     if (rsiValEl && rsiBarEl) {
@@ -65,48 +82,26 @@ function animateIndicators() {
         rsiBarEl.style.width = `${rsiVal}%`;
     }
 
-    // Volatility Bar Pulsing
     const volBarEl = document.getElementById('vol-bar');
-    if (volBarEl) {
-        let volPct = (75 + Math.random() * 15).toFixed(0);
-        volBarEl.style.width = `${volPct}%`;
-    }
+    if (volBarEl) volBarEl.style.width = `${(75 + Math.random() * 15).toFixed(0)}%`;
 
-    // Node Confirmation Match Rate & Latency
-    const nodeMatchEl = document.getElementById('node-match');
-    const latencyEl = document.getElementById('node-latency');
-    if (nodeMatchEl) {
-        let match = (95.0 + Math.random() * 4.5).toFixed(1);
-        nodeMatchEl.innerText = `MATCHING ${match}%`;
-    }
-    if (latencyEl) {
-        let ms = Math.floor(10 + Math.random() * 8);
-        latencyEl.innerText = `${ms}ms`;
-    }
-}
-setInterval(animateIndicators, 1400);
+    const matchEl = document.getElementById('node-match');
+    const latEl = document.getElementById('node-latency');
+    if (matchEl) matchEl.innerText = `MATCHING ${(95.0 + Math.random() * 4.5).toFixed(1)}%`;
+    if (latEl) latEl.innerText = `${Math.floor(10 + Math.random() * 8)}ms`;
+}, 1500);
 
-// 5. LIVING SCANNER: LIVE LOG MATRIX TEXT CYCLE
-const statusMessages = [
-    "EUR/USD: Analyzing Candle Pattern...",
-    "EUR/USD: Scanning Liquidity Depth...",
-    "EUR/USD: Testing Support & Resistance...",
-    "EUR/USD: Validating Momentum Vector...",
-    "EUR/USD: Order Flow Confluence Ready..."
+// 7. Live Log Matrix Cycle
+const msgs = [
+    "Analyzing Candle Pattern...", "Scanning Liquidity Depth...", "Testing Support Level...", "Validating Momentum Vector..."
 ];
-let msgIndex = 0;
+let msgIdx = 0;
 setInterval(() => {
-    const statusTextEl = document.getElementById('ai-status-text');
-    if (statusTextEl) {
-        msgIndex = (msgIndex + 1) % statusMessages.length;
-        statusTextEl.innerText = statusMessages[msgIndex];
-    }
+    const el = document.getElementById('ai-status-text');
+    if (el) { msgIdx = (msgIdx + 1) % msgs.length; el.innerText = msgs[msgIdx]; }
 }, 3000);
 
-// 6. SYSTEM DOCUMENTATION MODAL CONTROLS
-function openDocModal() {
-    document.getElementById('doc-modal').style.display = 'flex';
-}
-function closeDocModal() {
-    document.getElementById('doc-modal').style.display = 'none';
-           }
+// 8. Docs Modal Control
+function openDocModal() { document.getElementById('doc-modal').style.display = 'flex'; }
+function closeDocModal() { document.getElementById('doc-modal').style.display = 'none'; }
+            
