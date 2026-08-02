@@ -67,13 +67,12 @@ setInterval(() => {
     document.getElementById('live-clock').innerText = new Date().toLocaleTimeString();
 }, 1000);
 
-// Helper function to get Today's Date String (YYYY-MM-DD) for Daily History Separation
 function getTodayString() {
     let d = new Date();
     return `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`;
 }
 
-// 3. 24/7 Quantum Engine Core (Fixed 5/0 Minute Alignment + Random Durations)
+// 3. 24/7 Quantum Engine Core (Fixed 5/0 Minute Alignment)
 let currentSchedule = null;
 
 function masterSchedulerEngine() {
@@ -81,10 +80,9 @@ function masterSchedulerEngine() {
     const currentSec = now.getSeconds();
     const currentMin = now.getMinutes();
 
-    // Check if we are approaching a 5-minute mark (e.g. :05, :10, :15 ... :55, :00)
     let isNext5Min = (currentMin + 1) % 5 === 0;
     
-    // Check Pre-Signal Alert Phase (10 to 15 seconds before the 5-min mark)
+    // 10-15s Warning Alert
     if (isNext5Min && currentSec >= 45 && currentSec <= 50) {
         if (!currentSchedule) {
             let nextMin = currentMin + 1;
@@ -108,7 +106,7 @@ function masterSchedulerEngine() {
         return;
     }
 
-    // Check Signal Execution Start Phase (Exactly at :00 second of 5-min mark)
+    // Trade Execution
     if (currentMin % 5 === 0 && currentSec <= 3 && currentSchedule) {
         let startTime = Math.floor(Date.now() / 1000);
         let expireAt = startTime + (currentSchedule.durationMin * 60);
@@ -121,13 +119,14 @@ function masterSchedulerEngine() {
             dateStr: getTodayString()
         };
 
-        db.collection("active_signal").doc("current").set(activeDoc);
-        currentSchedule = null; // reset schedule
+        db.collection("active_signal").doc("current").set(activeDoc)
+          .catch(err => console.error("Firestore Write Error:", err));
+          
+        currentSchedule = null;
         playBeepSound();
         return;
     }
 
-    // Reset Schedule Buffer after entry
     if (currentMin % 5 !== 4) {
         currentSchedule = null;
     }
@@ -135,7 +134,7 @@ function masterSchedulerEngine() {
 
 setInterval(masterSchedulerEngine, 1000);
 
-// 4. Firebase Active Signal Listener
+// 4. Active Signal Listener
 let activeSignal = null;
 let countdownInterval = null;
 
@@ -159,11 +158,12 @@ db.collection("active_signal").doc("current").onSnapshot((doc) => {
     } else {
         if (!currentSchedule) renderThinkingMode();
     }
+}, (error) => {
+    console.error("Active Signal Listener Error:", error);
 });
 
 function finalizeResult(signalData) {
-    // 88% to 92% Win Rate Enforcement Logic
-    let isWin = Math.random() < 0.90; 
+    let isWin = Math.random() < 0.90; // High Win Probability
 
     let closedSignal = {
         ...signalData,
@@ -197,8 +197,6 @@ function startCountdown() {
 }
 
 // 5. UI Renderers
-
-// A. Active Trade Card Blueprint
 function renderActiveCard() {
     const container = document.getElementById('active-signal-container');
     let isCall = activeSignal.direction.includes("CALL");
@@ -250,7 +248,6 @@ function renderActiveCard() {
     `;
 }
 
-// B. Pre-Signal Alert (10-15s Warning)
 function renderPreSignalAlert(schedule, secondsLeft) {
     const container = document.getElementById('active-signal-container');
     container.innerHTML = `
@@ -264,7 +261,6 @@ function renderPreSignalAlert(schedule, secondsLeft) {
     `;
 }
 
-// C. Thinking Mode UI (Indicators + AI + Quantum Engine)
 function renderThinkingMode() {
     const container = document.getElementById('active-signal-container');
     container.innerHTML = `
@@ -299,15 +295,15 @@ function renderThinkingMode() {
     `;
 }
 
-// 6. History & Stats Engine (Reset Daily at 12:00 AM)
+// 6. Safe History Listener (Index Error Proof)
 function loadTodayHistory() {
     const tbody = document.getElementById('history-tbody');
     const procGrid = document.getElementById('processed-cards-grid');
     let todayStr = getTodayString();
 
+    // Querying without strict composite ordering to prevent Index errors
     db.collection("signal_history")
       .where("dateStr", "==", todayStr)
-      .orderBy("timestamp", "desc")
       .onSnapshot((snapshot) => {
         tbody.innerHTML = '';
         procGrid.innerHTML = '';
@@ -323,18 +319,21 @@ function loadTodayHistory() {
             return;
         }
 
-        let i = snapshot.docs.length;
+        // JavaScript Client Side Sorting
+        let docsArray = [];
+        snapshot.forEach(doc => docsArray.push(doc.data()));
+        docsArray.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+
+        let i = docsArray.length;
         let cardCount = 0;
 
-        snapshot.forEach((doc) => {
-            let data = doc.data();
+        docsArray.forEach((data) => {
             total++;
             if (data.isWin) wins++; else losses++;
 
             let dateObj = data.timestamp ? data.timestamp.toDate() : new Date();
             let timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-            // Table Row
             let tr = document.createElement('tr');
             let dirStyle = data.direction.includes("CALL") ? "color:var(--quotex-green); font-weight:bold;" : "color:var(--quotex-red); font-weight:bold;";
             let resBadge = data.isWin ? '<span class="badge-win">WIN</span>' : '<span class="badge-loss">LOSS</span>';
@@ -349,7 +348,6 @@ function loadTodayHistory() {
             `;
             tbody.appendChild(tr);
 
-            // Processed Grid Cards
             if (cardCount < 4) {
                 let div = document.createElement('div');
                 div.className = 'proc-card';
@@ -370,8 +368,11 @@ function loadTodayHistory() {
         document.getElementById('loss-count').innerText = losses;
         let rate = total > 0 ? ((wins / total) * 100).toFixed(1) : 0;
         document.getElementById('win-rate').innerText = rate + "%";
+    }, (err) => {
+        console.error("Firestore Load Error:", err);
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#FF3D00;">ডাটাবেজ কানেকশন ত্রুটি। কন্সোল চেক করুন।</td></tr>';
     });
 }
 
 loadTodayHistory();
-      
+              
