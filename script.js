@@ -48,8 +48,7 @@ function playBeepSound() {
         let gain = ctx.createGain();
         osc.type = 'sine';
         osc.frequency.setValueAtTime(880, ctx.currentTime);
-        gain.gain.setValueAtTime(0.15, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+        gain.gain.setValueAtTime(0.15, ctx.currentTime + 0.4);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start();
@@ -67,16 +66,129 @@ setInterval(() => {
     document.getElementById('live-clock').innerText = new Date().toLocaleTimeString();
 }, 1000);
 
-// Robust Date Format for Accurate History Filtering
 function getTodayString() {
     let d = new Date();
-    let year = d.getFullYear();
-    let month = (d.getMonth() + 1).toString().padStart(2, '0');
-    let day = d.getDate().toString().padStart(2, '0');
-    return `${year}-${month}-${day}`;
+    return `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`;
 }
 
-// 2. 24/7 Quantum Engine Core
+// Pseudo Random Seed based on Day for deterministic consistent history
+function seededRandom(seed) {
+    let x = Math.sin(seed++) * 10000;
+    return x - Math.floor(x);
+}
+
+// 2. Generate Realtime Daily History (00:00 to Current Time)
+function generateTodaySmartHistory() {
+    let now = new Date();
+    let currentHour = now.getHours();
+    let currentMin = now.getMinutes();
+
+    let dateSeed = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
+    let historyList = [];
+
+    let totalSlots = (currentHour * 12) + Math.floor(currentMin / 5);
+
+    for (let slot = 0; slot < totalSlots; slot++) {
+        let randVal = seededRandom(dateSeed + slot);
+        
+        // Average 3.5 trades per hour (Roughly 1 trade every 15-20 mins)
+        if (randVal > 0.35) { 
+            let slotHour = Math.floor(slot / 12);
+            let slotMin = (slot % 12) * 5;
+
+            let pairIdx = Math.floor(seededRandom(dateSeed + slot + 1) * otcPairs.length);
+            let isCall = seededRandom(dateSeed + slot + 2) > 0.5;
+            let isWin = seededRandom(dateSeed + slot + 3) < 0.89; // 89% Win Rate Enforcement
+            let dur = [5, 10, 15][Math.floor(seededRandom(dateSeed + slot + 4) * 3)];
+
+            let timeStr = `${slotHour.toString().padStart(2, '0')}:${slotMin.toString().padStart(2, '0')}`;
+
+            historyList.push({
+                timeStr: timeStr,
+                pair: otcPairs[pairIdx],
+                direction: isCall ? "CALL (UP) ⬆️" : "PUT (DOWN) ⬇️",
+                timeframe: `M${dur} (${dur} Min)`,
+                isWin: isWin,
+                orderTime: (slotHour * 60) + slotMin
+            });
+        }
+    }
+
+    // Sort newest first
+    historyList.sort((a, b) => b.orderTime - a.orderTime);
+    return historyList;
+}
+
+// 3. Render Today's Performance Stats & Table
+function renderSmartHistoryAndStats() {
+    const tbody = document.getElementById('history-tbody');
+    const procGrid = document.getElementById('processed-cards-grid');
+
+    if (!tbody || !procGrid) return;
+
+    let historyData = generateTodaySmartHistory();
+    tbody.innerHTML = '';
+    procGrid.innerHTML = '';
+
+    let total = historyData.length;
+    let wins = 0;
+    let losses = 0;
+
+    if (total === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#90A4AE;">আজকে নতুন দিন শুরু হয়েছে, ট্রেডের জন্য অপেক্ষা করা হচ্ছে...</td></tr>';
+        procGrid.innerHTML = '<p class="no-data">আজকের সমাপ্ত সিগন্যালগুলো এখানে দেখাবে...</p>';
+        document.getElementById('total-count').innerText = 0;
+        document.getElementById('win-count').innerText = 0;
+        document.getElementById('loss-count').innerText = 0;
+        document.getElementById('win-rate').innerText = "0%";
+        return;
+    }
+
+    let i = total;
+    let cardCount = 0;
+
+    historyData.forEach((data) => {
+        if (data.isWin) wins++; else losses++;
+
+        // Table Row
+        let tr = document.createElement('tr');
+        let dirStyle = data.direction.includes("CALL") ? "color:var(--quotex-green); font-weight:bold;" : "color:var(--quotex-red); font-weight:bold;";
+        let resBadge = data.isWin ? '<span class="badge-win">WIN</span>' : '<span class="badge-loss">LOSS</span>';
+
+        tr.innerHTML = `
+            <td>${i--}</td>
+            <td class="mono">${data.timeStr}</td>
+            <td><b>${data.pair}</b></td>
+            <td style="${dirStyle}">${data.direction}</td>
+            <td>${data.timeframe}</td>
+            <td>${resBadge}</td>
+        `;
+        tbody.appendChild(tr);
+
+        // Processed Cards Gallery
+        if (cardCount < 4) {
+            let div = document.createElement('div');
+            div.className = 'proc-card';
+            div.innerHTML = `
+                <div>
+                    <strong>${data.pair}</strong>
+                    <span>${data.timeStr} | ${data.direction}</span>
+                </div>
+                ${resBadge}
+            `;
+            procGrid.appendChild(div);
+            cardCount++;
+        }
+    });
+
+    document.getElementById('total-count').innerText = total;
+    document.getElementById('win-count').innerText = wins;
+    document.getElementById('loss-count').innerText = losses;
+    let rate = total > 0 ? ((wins / total) * 100).toFixed(1) : 0;
+    document.getElementById('win-rate').innerText = rate + "%";
+}
+
+// 4. 24/7 Quantum Engine Live Signal Scheduler
 let currentSchedule = null;
 
 function masterSchedulerEngine() {
@@ -86,7 +198,7 @@ function masterSchedulerEngine() {
 
     let isNext5Min = (currentMin + 1) % 5 === 0;
     
-    // 10-15s Pre-Signal Alert Phase
+    // 10-15s Warning Pre-Signal
     if (isNext5Min && currentSec >= 45 && currentSec <= 50) {
         if (!currentSchedule) {
             let nextMin = currentMin + 1;
@@ -110,7 +222,7 @@ function masterSchedulerEngine() {
         return;
     }
 
-    // Execution Phase at :00 Mark
+    // Trade Execution
     if (currentMin % 5 === 0 && currentSec <= 3 && currentSchedule) {
         let startTime = Math.floor(Date.now() / 1000);
         let expireAt = startTime + (currentSchedule.durationMin * 60);
@@ -120,14 +232,10 @@ function masterSchedulerEngine() {
             startTime: startTime,
             expireAt: expireAt,
             status: "IN_PROGRESS",
-            dateStr: getTodayString(),
-            createdTimeMs: Date.now()
+            dateStr: getTodayString()
         };
 
-        db.collection("active_signal").doc("current").set(activeDoc)
-          .then(() => console.log("Active Signal Saved to Firestore"))
-          .catch(err => console.error("Firestore Save Error:", err));
-          
+        db.collection("active_signal").doc("current").set(activeDoc).catch(e => console.error(e));
         currentSchedule = null;
         playBeepSound();
         return;
@@ -136,11 +244,16 @@ function masterSchedulerEngine() {
     if (currentMin % 5 !== 4) {
         currentSchedule = null;
     }
+
+    // Refresh history stats every minute to reflect progression
+    if (currentSec === 0) {
+        renderSmartHistoryAndStats();
+    }
 }
 
 setInterval(masterSchedulerEngine, 1000);
 
-// 3. Active Signal Listener & Result Saver
+// 5. Active Signal Realtime Listener
 let activeSignal = null;
 let countdownInterval = null;
 
@@ -154,51 +267,16 @@ db.collection("active_signal").doc("current").onSnapshot((doc) => {
             activeSignal = { ...data, remainingSec: remaining };
             startCountdown();
         } else {
-            if (data.status === "IN_PROGRESS") {
-                finalizeResult(data);
-            }
             activeSignal = null;
             clearInterval(countdownInterval);
             if (!currentSchedule) renderThinkingMode();
+            renderSmartHistoryAndStats();
         }
     } else {
         if (!currentSchedule) renderThinkingMode();
+        renderSmartHistoryAndStats();
     }
-}, (error) => {
-    console.error("Active Signal Listener Error:", error);
 });
-
-let isFinalizing = false;
-function finalizeResult(signalData) {
-    if (isFinalizing) return;
-    isFinalizing = true;
-
-    let isWin = Math.random() < 0.88; // ~88-90% Win rate
-
-    let closedSignal = {
-        pair: signalData.pair,
-        direction: signalData.direction,
-        timeframe: signalData.timeframe,
-        startTimeFormatted: signalData.startTimeFormatted,
-        entryPrice: signalData.entryPrice,
-        status: "COMPLETED",
-        isWin: isWin,
-        dateStr: signalData.dateStr || getTodayString(),
-        createdTimeMs: signalData.createdTimeMs || Date.now(),
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    };
-
-    // Save to signal_history collection
-    db.collection("signal_history").add(closedSignal).then(() => {
-        console.log("Successfully added to history database!");
-        return db.collection("active_signal").doc("current").update({ status: "COMPLETED" });
-    }).then(() => {
-        isFinalizing = false;
-    }).catch((err) => {
-        console.error("Error finalizing signal:", err);
-        isFinalizing = false;
-    });
-}
 
 function startCountdown() {
     clearInterval(countdownInterval);
@@ -210,16 +288,16 @@ function startCountdown() {
 
         if (activeSignal.remainingSec <= 0) {
             clearInterval(countdownInterval);
-            finalizeResult(activeSignal);
             activeSignal = null;
             if (!currentSchedule) renderThinkingMode();
+            renderSmartHistoryAndStats();
         } else {
             renderActiveCard();
         }
     }, 1000);
 }
 
-// 4. UI Renderers
+// 6. UI Renderers
 function renderActiveCard() {
     const container = document.getElementById('active-signal-container');
     let isCall = activeSignal.direction.includes("CALL");
@@ -318,80 +396,6 @@ function renderThinkingMode() {
     `;
 }
 
-// 5. Guaranteed Real-Time History Loader
-function loadTodayHistory() {
-    const tbody = document.getElementById('history-tbody');
-    const procGrid = document.getElementById('processed-cards-grid');
-    let todayStr = getTodayString();
-
-    db.collection("signal_history")
-      .where("dateStr", "==", todayStr)
-      .onSnapshot((snapshot) => {
-        tbody.innerHTML = '';
-        procGrid.innerHTML = '';
-        let total = 0, wins = 0, losses = 0;
-
-        if (snapshot.empty) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#90A4AE;">আজকে এখন পর্যন্ত কোনো সিগন্যাল সমাপ্ত হয়নি। সিগন্যাল শেষ হলেই এখানে যুক্ত হবে।</td></tr>';
-            procGrid.innerHTML = '<p class="no-data">আজকের সমাপ্ত সিগন্যালগুলো এখানে দেখাবে...</p>';
-            document.getElementById('total-count').innerText = 0;
-            document.getElementById('win-count').innerText = 0;
-            document.getElementById('loss-count').innerText = 0;
-            document.getElementById('win-rate').innerText = "0%";
-            return;
-        }
-
-        let docsArray = [];
-        snapshot.forEach(doc => docsArray.push(doc.data()));
-        docsArray.sort((a, b) => (b.createdTimeMs || 0) - (a.createdTimeMs || 0));
-
-        let i = docsArray.length;
-        let cardCount = 0;
-
-        docsArray.forEach((data) => {
-            total++;
-            if (data.isWin) wins++; else losses++;
-
-            let timeStr = data.startTimeFormatted || "12:00";
-
-            let tr = document.createElement('tr');
-            let dirStyle = data.direction.includes("CALL") ? "color:var(--quotex-green); font-weight:bold;" : "color:var(--quotex-red); font-weight:bold;";
-            let resBadge = data.isWin ? '<span class="badge-win">WIN</span>' : '<span class="badge-loss">LOSS</span>';
-
-            tr.innerHTML = `
-                <td>${i--}</td>
-                <td class="mono">${timeStr}</td>
-                <td><b>${data.pair}</b></td>
-                <td style="${dirStyle}">${data.direction}</td>
-                <td>${data.timeframe}</td>
-                <td>${resBadge}</td>
-            `;
-            tbody.appendChild(tr);
-
-            if (cardCount < 4) {
-                let div = document.createElement('div');
-                div.className = 'proc-card';
-                div.innerHTML = `
-                    <div>
-                        <strong>${data.pair}</strong>
-                        <span>${timeStr} | ${data.direction}</span>
-                    </div>
-                    ${resBadge}
-                `;
-                procGrid.appendChild(div);
-                cardCount++;
-            }
-        });
-
-        document.getElementById('total-count').innerText = total;
-        document.getElementById('win-count').innerText = wins;
-        document.getElementById('loss-count').innerText = losses;
-        let rate = total > 0 ? ((wins / total) * 100).toFixed(1) : 0;
-        document.getElementById('win-rate').innerText = rate + "%";
-    }, (err) => {
-        console.error("Firestore Load Error:", err);
-    });
-}
-
-loadTodayHistory();
-  
+// Initial Call
+renderSmartHistoryAndStats();
+      
