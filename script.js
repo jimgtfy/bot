@@ -84,3 +84,4 @@ function calculateDynamicUsers() {
 // Update Active Users every 4 seconds
 setInterval(calculateDynamicUsers, 4000);
 calculateDynamicUsers(); // Initial Call
+           
