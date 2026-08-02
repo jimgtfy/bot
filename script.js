@@ -62,17 +62,21 @@ function copyAsset(assetName) {
     alert('অ্যাসেট কপি করা হয়েছে: ' + assetName);
 }
 
-// 2. Real-Time Clock
+// Live Clock
 setInterval(() => {
     document.getElementById('live-clock').innerText = new Date().toLocaleTimeString();
 }, 1000);
 
+// Robust Date Format for Accurate History Filtering
 function getTodayString() {
     let d = new Date();
-    return `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`;
+    let year = d.getFullYear();
+    let month = (d.getMonth() + 1).toString().padStart(2, '0');
+    let day = d.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
 }
 
-// 3. 24/7 Quantum Engine Core (Fixed 5/0 Minute Alignment)
+// 2. 24/7 Quantum Engine Core
 let currentSchedule = null;
 
 function masterSchedulerEngine() {
@@ -82,7 +86,7 @@ function masterSchedulerEngine() {
 
     let isNext5Min = (currentMin + 1) % 5 === 0;
     
-    // 10-15s Warning Alert
+    // 10-15s Pre-Signal Alert Phase
     if (isNext5Min && currentSec >= 45 && currentSec <= 50) {
         if (!currentSchedule) {
             let nextMin = currentMin + 1;
@@ -94,7 +98,7 @@ function masterSchedulerEngine() {
                 pair: pair,
                 direction: Math.random() > 0.5 ? "CALL (UP) ⬆️" : "PUT (DOWN) ⬇️",
                 durationMin: durationMin,
-                timeframe: `M${durationMin} (${durationMin} Minutes)`,
+                timeframe: `M${durationMin} (${durationMin} Min)`,
                 startTimeFormatted: `${now.getHours().toString().padStart(2,'0')}:${nextMin === 60 ? '00' : nextMin.toString().padStart(2,'0')}`,
                 entryPrice: (Math.random() * (1.1200 - 1.0500) + 1.0500).toFixed(5),
                 martingale: "M1 Only",
@@ -106,7 +110,7 @@ function masterSchedulerEngine() {
         return;
     }
 
-    // Trade Execution
+    // Execution Phase at :00 Mark
     if (currentMin % 5 === 0 && currentSec <= 3 && currentSchedule) {
         let startTime = Math.floor(Date.now() / 1000);
         let expireAt = startTime + (currentSchedule.durationMin * 60);
@@ -116,11 +120,13 @@ function masterSchedulerEngine() {
             startTime: startTime,
             expireAt: expireAt,
             status: "IN_PROGRESS",
-            dateStr: getTodayString()
+            dateStr: getTodayString(),
+            createdTimeMs: Date.now()
         };
 
         db.collection("active_signal").doc("current").set(activeDoc)
-          .catch(err => console.error("Firestore Write Error:", err));
+          .then(() => console.log("Active Signal Saved to Firestore"))
+          .catch(err => console.error("Firestore Save Error:", err));
           
         currentSchedule = null;
         playBeepSound();
@@ -134,7 +140,7 @@ function masterSchedulerEngine() {
 
 setInterval(masterSchedulerEngine, 1000);
 
-// 4. Active Signal Listener
+// 3. Active Signal Listener & Result Saver
 let activeSignal = null;
 let countdownInterval = null;
 
@@ -148,8 +154,8 @@ db.collection("active_signal").doc("current").onSnapshot((doc) => {
             activeSignal = { ...data, remainingSec: remaining };
             startCountdown();
         } else {
-            if (activeSignal && activeSignal.status === "IN_PROGRESS") {
-                finalizeResult(activeSignal);
+            if (data.status === "IN_PROGRESS") {
+                finalizeResult(data);
             }
             activeSignal = null;
             clearInterval(countdownInterval);
@@ -162,19 +168,36 @@ db.collection("active_signal").doc("current").onSnapshot((doc) => {
     console.error("Active Signal Listener Error:", error);
 });
 
+let isFinalizing = false;
 function finalizeResult(signalData) {
-    let isWin = Math.random() < 0.90; // High Win Probability
+    if (isFinalizing) return;
+    isFinalizing = true;
+
+    let isWin = Math.random() < 0.88; // ~88-90% Win rate
 
     let closedSignal = {
-        ...signalData,
+        pair: signalData.pair,
+        direction: signalData.direction,
+        timeframe: signalData.timeframe,
+        startTimeFormatted: signalData.startTimeFormatted,
+        entryPrice: signalData.entryPrice,
         status: "COMPLETED",
         isWin: isWin,
-        dateStr: getTodayString(),
+        dateStr: signalData.dateStr || getTodayString(),
+        createdTimeMs: signalData.createdTimeMs || Date.now(),
         timestamp: firebase.firestore.FieldValue.serverTimestamp()
     };
-    
-    db.collection("signal_history").add(closedSignal);
-    db.collection("active_signal").doc("current").update({ status: "COMPLETED" });
+
+    // Save to signal_history collection
+    db.collection("signal_history").add(closedSignal).then(() => {
+        console.log("Successfully added to history database!");
+        return db.collection("active_signal").doc("current").update({ status: "COMPLETED" });
+    }).then(() => {
+        isFinalizing = false;
+    }).catch((err) => {
+        console.error("Error finalizing signal:", err);
+        isFinalizing = false;
+    });
 }
 
 function startCountdown() {
@@ -196,7 +219,7 @@ function startCountdown() {
     }, 1000);
 }
 
-// 5. UI Renderers
+// 4. UI Renderers
 function renderActiveCard() {
     const container = document.getElementById('active-signal-container');
     let isCall = activeSignal.direction.includes("CALL");
@@ -295,13 +318,12 @@ function renderThinkingMode() {
     `;
 }
 
-// 6. Safe History Listener (Index Error Proof)
+// 5. Guaranteed Real-Time History Loader
 function loadTodayHistory() {
     const tbody = document.getElementById('history-tbody');
     const procGrid = document.getElementById('processed-cards-grid');
     let todayStr = getTodayString();
 
-    // Querying without strict composite ordering to prevent Index errors
     db.collection("signal_history")
       .where("dateStr", "==", todayStr)
       .onSnapshot((snapshot) => {
@@ -310,7 +332,7 @@ function loadTodayHistory() {
         let total = 0, wins = 0, losses = 0;
 
         if (snapshot.empty) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#90A4AE;">আজকে এখন পর্যন্ত কোনো সিগন্যাল সমাপ্ত হয়নি।</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#90A4AE;">আজকে এখন পর্যন্ত কোনো সিগন্যাল সমাপ্ত হয়নি। সিগন্যাল শেষ হলেই এখানে যুক্ত হবে।</td></tr>';
             procGrid.innerHTML = '<p class="no-data">আজকের সমাপ্ত সিগন্যালগুলো এখানে দেখাবে...</p>';
             document.getElementById('total-count').innerText = 0;
             document.getElementById('win-count').innerText = 0;
@@ -319,10 +341,9 @@ function loadTodayHistory() {
             return;
         }
 
-        // JavaScript Client Side Sorting
         let docsArray = [];
         snapshot.forEach(doc => docsArray.push(doc.data()));
-        docsArray.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+        docsArray.sort((a, b) => (b.createdTimeMs || 0) - (a.createdTimeMs || 0));
 
         let i = docsArray.length;
         let cardCount = 0;
@@ -331,8 +352,7 @@ function loadTodayHistory() {
             total++;
             if (data.isWin) wins++; else losses++;
 
-            let dateObj = data.timestamp ? data.timestamp.toDate() : new Date();
-            let timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            let timeStr = data.startTimeFormatted || "12:00";
 
             let tr = document.createElement('tr');
             let dirStyle = data.direction.includes("CALL") ? "color:var(--quotex-green); font-weight:bold;" : "color:var(--quotex-red); font-weight:bold;";
@@ -340,7 +360,7 @@ function loadTodayHistory() {
 
             tr.innerHTML = `
                 <td>${i--}</td>
-                <td class="mono">${data.startTimeFormatted || timeStr}</td>
+                <td class="mono">${timeStr}</td>
                 <td><b>${data.pair}</b></td>
                 <td style="${dirStyle}">${data.direction}</td>
                 <td>${data.timeframe}</td>
@@ -354,7 +374,7 @@ function loadTodayHistory() {
                 div.innerHTML = `
                     <div>
                         <strong>${data.pair}</strong>
-                        <span>${data.startTimeFormatted || timeStr} | ${data.direction}</span>
+                        <span>${timeStr} | ${data.direction}</span>
                     </div>
                     ${resBadge}
                 `;
@@ -370,9 +390,8 @@ function loadTodayHistory() {
         document.getElementById('win-rate').innerText = rate + "%";
     }, (err) => {
         console.error("Firestore Load Error:", err);
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#FF3D00;">ডাটাবেজ কানেকশন ত্রুটি। কন্সোল চেক করুন।</td></tr>';
     });
 }
 
 loadTodayHistory();
-              
+  
