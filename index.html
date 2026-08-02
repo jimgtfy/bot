@@ -2,80 +2,84 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Quotex Quant Room - PRO v3.0</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Fonts -->
+    <!-- Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
-    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 
-    <!-- TOP HEADER BAR -->
+    <!-- TOP HEADER -->
     <header class="top-bar">
         <div class="brand">
-            <div class="logo-icon"><i class="fa-solid fa-cubes"></i></div>
+            <i class="fa-solid fa-cubes logo-icon"></i>
             <div class="brand-text">QUOTEX<span>QUANT</span></div>
             <span class="badge-pro">PRO v3.0</span>
         </div>
         <div class="header-right">
-            <div class="traders-count" title="Active Live Traders">
+            <div class="traders-count">
                 <span class="pulse-dot"></span>
                 <i class="fa-solid fa-users"></i>
                 <span id="active-traders-count">142</span>
             </div>
-            <button class="doc-btn" onclick="openDocModal()" title="System Documentation">
-                <i class="fa-solid fa-book-bookmark"></i> Docs
-            </button>
-            <button id="sound-btn" class="icon-btn active" title="Toggle Sound Alert">
-                <i class="fa-solid fa-volume-high"></i>
-            </button>
+            <button class="icon-btn" onclick="openDocModal()" title="Documentation"><i class="fa-solid fa-book"></i></button>
+            <button id="sound-btn" class="icon-btn active" title="Toggle Sound"><i class="fa-solid fa-volume-high"></i></button>
         </div>
     </header>
 
     <!-- MAIN CONTAINER -->
     <main class="main-container">
 
-        <!-- TAB 1: HOME SECTION -->
+        <!-- TAB 1: HOME -->
         <section id="tab-home" class="tab-content active">
             <div class="hero-card">
                 <h2>Automated Quantum Engine</h2>
-                <p>24/7 Algorithmic Trading Signal Generator with High Confluence Micro-Tick Scanning.</p>
-                <button class="btn-primary" onclick="switchTab('signals')">
+                <p>24/7 Algorithmic Trading Signal Generator with High Confluence Scanning.</p>
+                <button class="btn-primary" onclick="switchTab('signals', document.getElementById('nav-signals'))">
                     <i class="fa-solid fa-bolt"></i> Open Signal Room
                 </button>
             </div>
 
-            <!-- STATS OVERVIEW -->
+            <!-- QUICK GUIDE FOR USERS -->
+            <div class="guide-card">
+                <div class="guide-header"><i class="fa-solid fa-circle-info"></i> How to Follow Our Signals</div>
+                <div class="guide-steps">
+                    <div class="step-item"><span class="step-num">1</span><div class="step-text"><strong>Check Alert:</strong> Monitor the Signals tab for asset pair and expiry time.</div></div>
+                    <div class="step-item"><span class="step-num">2</span><div class="step-text"><strong>Exact Entry:</strong> Execute CALL ⬆️ or PUT ⬇️ exactly when the timer hits 00:00.</div></div>
+                    <div class="step-item"><span class="step-num">3</span><div class="step-text"><strong>Martingale:</strong> If 1st trade loses, use a 1-Step Martingale (M1) on the next candle.</div></div>
+                </div>
+            </div>
+
             <div class="stats-grid">
-                <div class="stat-card">
-                    <span class="stat-label">Today's Signals</span>
-                    <span class="stat-val" id="stat-total">18</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-label">Total Wins</span>
-                    <span class="stat-val text-green" id="stat-wins">16</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-label">Total Losses</span>
-                    <span class="stat-val text-red" id="stat-losses">2</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-label">Win Rate</span>
-                    <span class="stat-val text-gold" id="stat-winrate">88.8%</span>
-                </div>
+                <div class="stat-card"><span class="stat-label">Today's Signals</span><span class="stat-val">18</span></div>
+                <div class="stat-card"><span class="stat-label">Total Wins</span><span class="stat-val text-green">16</span></div>
+                <div class="stat-card"><span class="stat-label">Total Losses</span><span class="stat-val text-red">2</span></div>
+                <div class="stat-card"><span class="stat-label">Win Rate</span><span class="stat-val text-gold">88.8%</span></div>
             </div>
         </section>
 
-        <!-- TAB 2: LIVE SIGNALS & LIVING SCANNER -->
+        <!-- TAB 2: SIGNALS -->
         <section id="tab-signals" class="tab-content">
             
-            <!-- LIVING THINKING SCANNER MODULE -->
+            <!-- LIVE SIGNAL BOX -->
+            <div id="trade-alert-card" class="trade-alert-card">
+                <div class="alert-top">
+                    <span class="alert-title"><i class="fa-solid fa-triangle-exclamation"></i> UPCOMING SIGNAL DETECTED</span>
+                    <span class="timer-badge" id="countdown-timer">00:45</span>
+                </div>
+                <div class="signal-details">
+                    <div class="signal-row"><span class="lbl">Asset Pair:</span><span class="val font-mono">EUR/USD (OTC)</span></div>
+                    <div class="signal-row"><span class="lbl">Timeframe:</span><span class="val font-mono">M5 (5 Minutes)</span></div>
+                    <div class="signal-row"><span class="lbl">Direction:</span><span class="val-action call">CALL ⬆️ (BUY)</span></div>
+                </div>
+                <div class="bar-bg"><div id="timer-bar" class="bar-fill gold" style="width: 100%;"></div></div>
+            </div>
+
+            <!-- THINKING SCANNER MODULE -->
             <div class="scanner-card">
-                <!-- RADAR GRAPHIC -->
                 <div class="radar-box">
-                    <div class="radar-grid"></div>
                     <div class="radar-sweep"></div>
                     <div class="brain-core">
                         <i class="fa-solid fa-brain"></i>
@@ -83,118 +87,39 @@
                     </div>
                 </div>
 
-                <!-- LIVE ORDER FLOW DEPTH (DYNAMIC MICRO-TICKS) -->
                 <div class="order-depth-box">
                     <div class="box-header">Live Order Flow Depth (Micro-Ticks)</div>
-                    <div class="tick-row ask">
-                        <span class="ask-price">1.08542</span>
-                        <span class="ask-vol">42,850 USD</span>
-                    </div>
-                    <div class="tick-row ask">
-                        <span class="ask-price">1.08540</span>
-                        <span class="ask-vol">18,200 USD</span>
-                    </div>
-                    <div class="tick-row bid">
-                        <span class="bid-price">1.08538</span>
-                        <span class="bid-vol">89,100 USD</span>
-                    </div>
-                    <div class="tick-row bid">
-                        <span class="bid-price">1.08535</span>
-                        <span class="bid-vol">34,500 USD</span>
-                    </div>
-                </div>
-
-                <!-- DYNAMIC INDICATORS & PROGRESS BARS -->
-                <div class="indicator-group">
-                    <div class="ind-info">
-                        <span><i class="fa-solid fa-chart-line"></i> RSI (14) Momentum:</span>
-                        <span id="rsi-val" class="text-green font-mono">Oversold (24.8)</span>
-                    </div>
-                    <div class="bar-bg"><div id="rsi-bar" class="bar-fill green" style="width: 24.8%;"></div></div>
+                    <div class="tick-row ask"><span class="ask-price">1.08542</span><span class="ask-vol">42,850 USD</span></div>
+                    <div class="tick-row bid"><span class="bid-price">1.08538</span><span class="bid-vol">89,100 USD</span></div>
                 </div>
 
                 <div class="indicator-group">
-                    <div class="ind-info">
-                        <span><i class="fa-solid fa-layer-group"></i> Bollinger Bands Breakout:</span>
-                        <span id="bb-val" class="text-gold font-mono">Lower Band Test</span>
-                    </div>
-                    <div class="bar-bg"><div id="bb-bar" class="bar-fill gold" style="width: 65%;"></div></div>
+                    <div class="ind-info"><span>RSI (14) Momentum:</span><span id="rsi-val" class="text-green font-mono">Oversold (24.8)</span></div>
+                    <div class="bar-bg"><div id="rsi-bar" class="bar-fill green" style="width: 25%;"></div></div>
                 </div>
-
                 <div class="indicator-group">
-                    <div class="ind-info">
-                        <span><i class="fa-solid fa-wave-square"></i> Order Flow Volatility:</span>
-                        <span id="vol-val" class="text-green font-mono">High Volume Spike</span>
-                    </div>
+                    <div class="ind-info"><span>Order Flow Volatility:</span><span id="vol-val" class="text-green font-mono">High Volume</span></div>
                     <div class="bar-bg"><div id="vol-bar" class="bar-fill green" style="width: 82%;"></div></div>
                 </div>
 
-                <!-- AI BOT NODE BOX -->
                 <div class="ai-node-box">
-                    <div class="node-top">
-                        <span><i class="fa-solid fa-robot"></i> AI Bot Node #09 Confirmation</span>
-                        <span id="node-match" class="badge-match">MATCHING 96.4%</span>
-                    </div>
-                    <div class="node-bottom">
-                        <span>Latency: <strong id="node-latency" class="font-mono text-green">12ms</strong></span>
-                        <span>Pattern: <strong id="node-pattern" class="text-gold">Bullish Reversal</strong></span>
-                    </div>
+                    <div class="node-top"><span><i class="fa-solid fa-robot"></i> AI Bot Node #09</span><span id="node-match" class="badge-match">MATCHING 96.4%</span></div>
+                    <div class="node-bottom"><span>Latency: <strong id="node-latency" class="font-mono text-green">12ms</strong></span></div>
                 </div>
-
-                <!-- FOOTER LIVE TEXT LOG -->
                 <div class="scanner-footer">
-                    <span class="footer-item"><i class="fa-solid fa-gear fa-spin"></i> <span id="ai-status-text">EUR/USD: Analyzing Candle Pattern...</span></span>
-                    <span class="footer-item"><i class="fa-solid fa-shield-halved"></i> Risk Control: Safe Execution</span>
+                    <span class="footer-item"><i class="fa-solid fa-gear fa-spin"></i> <span id="ai-status-text">Analyzing Candle Pattern...</span></span>
                 </div>
             </div>
-
-            <!-- PRE-SIGNAL / UPCOMING TRADE ALERT CARD -->
-            <div id="trade-alert-card" class="trade-alert-card">
-                <div class="alert-top">
-                    <span class="alert-title"><i class="fa-solid fa-triangle-exclamation"></i> UPCOMING TRADE DETECTED</span>
-                    <span class="timer-badge" id="countdown-timer">25s REMAINING</span>
-                </div>
-                <div class="alert-body">
-                    <p>Get Ready! Trade shot execution in <span id="timer-sec">25</span> seconds:</p>
-                    <h3 id="alert-pair-time">EUR/USD (OTC) — M5 (5 Minutes)</h3>
-                </div>
-                <div class="bar-bg"><div id="timer-bar" class="bar-fill gold" style="width: 100%;"></div></div>
-            </div>
-
         </section>
 
-        <!-- TAB 3: ANALYTICS SECTION -->
+        <!-- TAB 3: ANALYTICS -->
         <section id="tab-analytics" class="tab-content">
-            <h3 class="section-title">Today's Trading Analytics</h3>
             <div class="table-container">
                 <table class="analytics-table">
-                    <thead>
-                        <tr>
-                            <th>Time</th>
-                            <th>Asset Pair</th>
-                            <th>Action</th>
-                            <th>Result</th>
-                        </tr>
-                    </thead>
-                    <tbody id="analytics-history-body">
-                        <tr>
-                            <td>12:45 PM</td>
-                            <td>EUR/USD OTC</td>
-                            <td><span class="badge-call">CALL ⬆️</span></td>
-                            <td><span class="badge-win">WIN (M0)</span></td>
-                        </tr>
-                        <tr>
-                            <td>12:30 PM</td>
-                            <td>GBP/USD OTC</td>
-                            <td><span class="badge-put">PUT ⬇️</span></td>
-                            <td><span class="badge-win">WIN (M1)</span></td>
-                        </tr>
-                        <tr>
-                            <td>12:15 PM</td>
-                            <td>USD/JPY OTC</td>
-                            <td><span class="badge-call">CALL ⬆️</span></td>
-                            <td><span class="badge-loss">LOSS</span></td>
-                        </tr>
+                    <thead><tr><th>Time</th><th>Pair</th><th>Action</th><th>Result</th></tr></thead>
+                    <tbody>
+                        <tr><td>12:45 PM</td><td>EUR/USD</td><td><span class="badge-call">CALL</span></td><td><span class="badge-win">WIN</span></td></tr>
+                        <tr><td>12:15 PM</td><td>USD/JPY</td><td><span class="badge-put">PUT</span></td><td><span class="badge-loss">LOSS</span></td></tr>
                     </tbody>
                 </table>
             </div>
@@ -206,64 +131,37 @@
     <div id="doc-modal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
-                <h3><i class="fa-solid fa-file-contract"></i> System Policy & Documentation</h3>
+                <h3><i class="fa-solid fa-file-contract"></i> System Documentation</h3>
                 <button class="close-btn" onclick="closeDocModal()">&times;</button>
             </div>
             <div class="modal-body">
-                
-                <!-- SECTION 1 -->
                 <div class="doc-sec">
-                    <h4>1. 🚀 How to Use the Platform (User Guide)</h4>
+                    <h4>1. How to Use the Platform</h4>
                     <ul>
-                        <li><strong>Asset Preparation:</strong> Monitor the <em>Signals Tab</em>. 25s prior to execution, an alert will display the asset pair and timeframe. Select that pair on Quotex immediately.</li>
-                        <li><strong>Exact Timing Entry:</strong> As the countdown hits <code>00:00</code>, enter your trade on Quotex in the exact direction specified (CALL ⬆️ or PUT ⬇️).</li>
-                        <li><strong>Martingale Protocol (M1):</strong> If the initial trade closes in a loss, execute a 1-Step Martingale (M1) trade in the same direction on the very next candle with double investment.</li>
+                        <li>Wait for the countdown timer to hit <code>00:00</code>.</li>
+                        <li>Enter trade immediately in the specified direction.</li>
+                        <li>Use maximum 1-Step Martingale (M1) if the first trade loses.</li>
                     </ul>
                 </div>
-
-                <!-- SECTION 2 -->
                 <div class="doc-sec">
-                    <h4>2. ⚡ Operational Trading Rules</h4>
-                    <ul>
-                        <li><strong>Strict No Late Entries:</strong> Never enter 3-5 seconds after a candle has started. Late entries increase exposure to slippage.</li>
-                        <li><strong>Capital Allocation (1-3%):</strong> Risk only 1% to 3% of your wallet balance per trade. Avoid emotional over-leveraging.</li>
-                        <li><strong>Daily Targets:</strong> Stop trading once your daily profit (+5% to +10%) or stop-loss limit is met.</li>
-                    </ul>
+                    <h4>2. Trading Rules</h4>
+                    <ul><li>No late entries (3-5s).</li><li>Risk 1% - 3% of capital per trade.</li></ul>
                 </div>
-
-                <!-- SECTION 3 -->
-                <div class="doc-sec">
-                    <h4>3. 📜 Terms of Service & System Logic</h4>
-                    <p>Signals are generated by our Quantum AI Engine running 24/7 on an automated 5-minute cycle. Usage is strictly granted for non-commercial individual access. Daily history resets at 12:00 AM.</p>
-                </div>
-
-                <!-- SECTION 4 -->
                 <div class="doc-sec warning-box">
                     <h4>⚠️ Financial Risk Disclaimer</h4>
-                    <p>Trading binary options carries substantial financial risk. Signals with 88%-92% estimated accuracy do not guarantee profits. All trades executed on Quotex are strictly at your own risk.</p>
+                    <p>Trading is highly risky. Signals do not guarantee profits. Trade at your own risk.</p>
                 </div>
-
             </div>
         </div>
     </div>
 
-    <!-- BOTTOM NAVIGATION BAR -->
+    <!-- BOTTOM NAV -->
     <nav class="bottom-nav">
-        <button class="nav-btn active" onclick="switchTab('home', this)">
-            <i class="fa-solid fa-house"></i>
-            <span>Home</span>
-        </button>
-        <button class="nav-btn" onclick="switchTab('signals', this)">
-            <i class="fa-solid fa-chart-line"></i>
-            <span>Signals</span>
-        </button>
-        <button class="nav-btn" onclick="switchTab('analytics', this)">
-            <i class="fa-solid fa-pie-chart"></i>
-            <span>Analytics</span>
-        </button>
+        <button class="nav-btn active" id="nav-home" onclick="switchTab('home', this)"><i class="fa-solid fa-house"></i><span>Home</span></button>
+        <button class="nav-btn" id="nav-signals" onclick="switchTab('signals', this)"><i class="fa-solid fa-chart-line"></i><span>Signals</span></button>
+        <button class="nav-btn" id="nav-analytics" onclick="switchTab('analytics', this)"><i class="fa-solid fa-pie-chart"></i><span>Analytics</span></button>
     </nav>
 
     <script src="script.js"></script>
 </body>
-    </html>
-    
+</html>
