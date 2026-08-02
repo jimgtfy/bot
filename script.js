@@ -1,401 +1,86 @@
-// 1. Firebase Initialization
-const firebaseConfig = {
-  apiKey: "AIzaSyCjauNF6LfqnevzzgaxoI2LCM1H2Fk-rg",
-  authDomain: "signal-bot-2.firebaseapp.com",
-  projectId: "signal-bot-2",
-  storageBucket: "signal-bot-2.firebasestorage.app",
-  messagingSenderId: "742892417714",
-  appId: "1:742892417714:web:aa8894ab18ad32672477ab",
-  measurementId: "G-ZDBN6LN935"
-};
+/* ==========================================================================
+   SMART DYNAMIC ACTIVE USERS & NAVIGATION LOGIC
+   ========================================================================== */
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+let soundEnabled = true;
 
-let isSoundOn = true;
-const otcPairs = ["EUR/USD (OTC)", "GBP/USD (OTC)", "USD/JPY (OTC)", "AUD/USD (OTC)", "BTC/USD (OTC)", "ETH/USD (OTC)"];
-
-// Navigation & Filters
-function switchTab(tabId, el) {
+// Tab Switcher Logic
+function switchTab(tabName, element) {
     document.querySelectorAll('.app-section').forEach(sec => sec.classList.remove('active'));
-    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-    document.getElementById('section-' + tabId).classList.add('active');
-    if (el) el.classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+    
+    document.getElementById(`section-${tabName}`).classList.add('active');
+    element.classList.add('active');
 }
 
-function switchTabDirect(tabId) {
-    switchTab(tabId, document.getElementById('btn-nav-' + tabId));
+function switchTabDirect(tabName) {
+    const navBtn = document.getElementById(`btn-nav-${tabName}`);
+    if (navBtn) switchTab(tabName, navBtn);
 }
 
-function filterAssets(type, btn) {
-    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-    btn.classList.add('active');
-}
-
+// Sound Toggle
 function toggleSound() {
-    isSoundOn = !isSoundOn;
+    soundEnabled = !soundEnabled;
     const btn = document.getElementById('sound-toggle');
     const icon = document.getElementById('sound-icon');
-    btn.className = isSoundOn ? 'sound-btn active' : 'sound-btn';
-    icon.className = isSoundOn ? 'fa-solid fa-volume-high' : 'fa-solid fa-volume-xmark';
-}
-
-function playBeepSound() {
-    if (!isSoundOn) return;
-    try {
-        let ctx = new (window.AudioContext || window.webkitAudioContext)();
-        let osc = ctx.createOscillator();
-        let gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(880, ctx.currentTime);
-        gain.gain.setValueAtTime(0.15, ctx.currentTime + 0.4);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.4);
-    } catch(e){}
-}
-
-function copyAsset(assetName) {
-    navigator.clipboard.writeText(assetName);
-    alert('অ্যাসেট কপি করা হয়েছে: ' + assetName);
-}
-
-// Live Clock
-setInterval(() => {
-    document.getElementById('live-clock').innerText = new Date().toLocaleTimeString();
-}, 1000);
-
-function getTodayString() {
-    let d = new Date();
-    return `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`;
-}
-
-// Pseudo Random Seed based on Day for deterministic consistent history
-function seededRandom(seed) {
-    let x = Math.sin(seed++) * 10000;
-    return x - Math.floor(x);
-}
-
-// 2. Generate Realtime Daily History (00:00 to Current Time)
-function generateTodaySmartHistory() {
-    let now = new Date();
-    let currentHour = now.getHours();
-    let currentMin = now.getMinutes();
-
-    let dateSeed = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
-    let historyList = [];
-
-    let totalSlots = (currentHour * 12) + Math.floor(currentMin / 5);
-
-    for (let slot = 0; slot < totalSlots; slot++) {
-        let randVal = seededRandom(dateSeed + slot);
-        
-        // Average 3.5 trades per hour (Roughly 1 trade every 15-20 mins)
-        if (randVal > 0.35) { 
-            let slotHour = Math.floor(slot / 12);
-            let slotMin = (slot % 12) * 5;
-
-            let pairIdx = Math.floor(seededRandom(dateSeed + slot + 1) * otcPairs.length);
-            let isCall = seededRandom(dateSeed + slot + 2) > 0.5;
-            let isWin = seededRandom(dateSeed + slot + 3) < 0.89; // 89% Win Rate Enforcement
-            let dur = [5, 10, 15][Math.floor(seededRandom(dateSeed + slot + 4) * 3)];
-
-            let timeStr = `${slotHour.toString().padStart(2, '0')}:${slotMin.toString().padStart(2, '0')}`;
-
-            historyList.push({
-                timeStr: timeStr,
-                pair: otcPairs[pairIdx],
-                direction: isCall ? "CALL (UP) ⬆️" : "PUT (DOWN) ⬇️",
-                timeframe: `M${dur} (${dur} Min)`,
-                isWin: isWin,
-                orderTime: (slotHour * 60) + slotMin
-            });
-        }
-    }
-
-    // Sort newest first
-    historyList.sort((a, b) => b.orderTime - a.orderTime);
-    return historyList;
-}
-
-// 3. Render Today's Performance Stats & Table
-function renderSmartHistoryAndStats() {
-    const tbody = document.getElementById('history-tbody');
-    const procGrid = document.getElementById('processed-cards-grid');
-
-    if (!tbody || !procGrid) return;
-
-    let historyData = generateTodaySmartHistory();
-    tbody.innerHTML = '';
-    procGrid.innerHTML = '';
-
-    let total = historyData.length;
-    let wins = 0;
-    let losses = 0;
-
-    if (total === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#90A4AE;">আজকে নতুন দিন শুরু হয়েছে, ট্রেডের জন্য অপেক্ষা করা হচ্ছে...</td></tr>';
-        procGrid.innerHTML = '<p class="no-data">আজকের সমাপ্ত সিগন্যালগুলো এখানে দেখাবে...</p>';
-        document.getElementById('total-count').innerText = 0;
-        document.getElementById('win-count').innerText = 0;
-        document.getElementById('loss-count').innerText = 0;
-        document.getElementById('win-rate').innerText = "0%";
-        return;
-    }
-
-    let i = total;
-    let cardCount = 0;
-
-    historyData.forEach((data) => {
-        if (data.isWin) wins++; else losses++;
-
-        // Table Row
-        let tr = document.createElement('tr');
-        let dirStyle = data.direction.includes("CALL") ? "color:var(--quotex-green); font-weight:bold;" : "color:var(--quotex-red); font-weight:bold;";
-        let resBadge = data.isWin ? '<span class="badge-win">WIN</span>' : '<span class="badge-loss">LOSS</span>';
-
-        tr.innerHTML = `
-            <td>${i--}</td>
-            <td class="mono">${data.timeStr}</td>
-            <td><b>${data.pair}</b></td>
-            <td style="${dirStyle}">${data.direction}</td>
-            <td>${data.timeframe}</td>
-            <td>${resBadge}</td>
-        `;
-        tbody.appendChild(tr);
-
-        // Processed Cards Gallery
-        if (cardCount < 4) {
-            let div = document.createElement('div');
-            div.className = 'proc-card';
-            div.innerHTML = `
-                <div>
-                    <strong>${data.pair}</strong>
-                    <span>${data.timeStr} | ${data.direction}</span>
-                </div>
-                ${resBadge}
-            `;
-            procGrid.appendChild(div);
-            cardCount++;
-        }
-    });
-
-    document.getElementById('total-count').innerText = total;
-    document.getElementById('win-count').innerText = wins;
-    document.getElementById('loss-count').innerText = losses;
-    let rate = total > 0 ? ((wins / total) * 100).toFixed(1) : 0;
-    document.getElementById('win-rate').innerText = rate + "%";
-}
-
-// 4. 24/7 Quantum Engine Live Signal Scheduler
-let currentSchedule = null;
-
-function masterSchedulerEngine() {
-    const now = new Date();
-    const currentSec = now.getSeconds();
-    const currentMin = now.getMinutes();
-
-    let isNext5Min = (currentMin + 1) % 5 === 0;
     
-    // 10-15s Warning Pre-Signal
-    if (isNext5Min && currentSec >= 45 && currentSec <= 50) {
-        if (!currentSchedule) {
-            let nextMin = currentMin + 1;
-            let pair = otcPairs[Math.floor(Math.random() * otcPairs.length)];
-            let durations = [5, 10, 15];
-            let durationMin = durations[Math.floor(Math.random() * durations.length)];
-            
-            currentSchedule = {
-                pair: pair,
-                direction: Math.random() > 0.5 ? "CALL (UP) ⬆️" : "PUT (DOWN) ⬇️",
-                durationMin: durationMin,
-                timeframe: `M${durationMin} (${durationMin} Min)`,
-                startTimeFormatted: `${now.getHours().toString().padStart(2,'0')}:${nextMin === 60 ? '00' : nextMin.toString().padStart(2,'0')}`,
-                entryPrice: (Math.random() * (1.1200 - 1.0500) + 1.0500).toFixed(5),
-                martingale: "M1 Only",
-                confidence: (Math.random() * (98.5 - 91.0) + 91.0).toFixed(1)
-            };
-            playBeepSound();
-        }
-        renderPreSignalAlert(currentSchedule, 60 - currentSec);
-        return;
-    }
-
-    // Trade Execution
-    if (currentMin % 5 === 0 && currentSec <= 3 && currentSchedule) {
-        let startTime = Math.floor(Date.now() / 1000);
-        let expireAt = startTime + (currentSchedule.durationMin * 60);
-
-        let activeDoc = {
-            ...currentSchedule,
-            startTime: startTime,
-            expireAt: expireAt,
-            status: "IN_PROGRESS",
-            dateStr: getTodayString()
-        };
-
-        db.collection("active_signal").doc("current").set(activeDoc).catch(e => console.error(e));
-        currentSchedule = null;
-        playBeepSound();
-        return;
-    }
-
-    if (currentMin % 5 !== 4) {
-        currentSchedule = null;
-    }
-
-    // Refresh history stats every minute to reflect progression
-    if (currentSec === 0) {
-        renderSmartHistoryAndStats();
-    }
-}
-
-setInterval(masterSchedulerEngine, 1000);
-
-// 5. Active Signal Realtime Listener
-let activeSignal = null;
-let countdownInterval = null;
-
-db.collection("active_signal").doc("current").onSnapshot((doc) => {
-    if (doc.exists) {
-        let data = doc.data();
-        let now = Math.floor(Date.now() / 1000);
-        let remaining = data.expireAt - now;
-
-        if (remaining > 0 && data.status === "IN_PROGRESS") {
-            activeSignal = { ...data, remainingSec: remaining };
-            startCountdown();
-        } else {
-            activeSignal = null;
-            clearInterval(countdownInterval);
-            if (!currentSchedule) renderThinkingMode();
-            renderSmartHistoryAndStats();
-        }
+    if (soundEnabled) {
+        btn.classList.add('active');
+        icon.className = 'fa-solid fa-volume-high';
     } else {
-        if (!currentSchedule) renderThinkingMode();
-        renderSmartHistoryAndStats();
+        btn.classList.remove('active');
+        icon.className = 'fa-solid fa-volume-xmark';
     }
-});
+}
 
-function startCountdown() {
-    clearInterval(countdownInterval);
-    renderActiveCard();
+// Live Clock Updater
+function updateClock() {
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('en-US', { hour12: true });
+    const clockElem = document.getElementById('live-clock');
+    if (clockElem) clockElem.innerText = timeStr;
+}
+setInterval(updateClock, 1000);
+
+/* --- DYNAMIC ACTIVE USERS ALGORITHM --- */
+let baseActiveUsers = 24; // Initial start (between 20 to 30)
+
+function calculateDynamicUsers() {
+    const now = new Date();
+    const currentHour = now.getHours();
     
-    countdownInterval = setInterval(() => {
-        if (!activeSignal) return;
-        activeSignal.remainingSec--;
+    // 1. Calculate Evening Spike Logic (Peak Time: 6:00 PM - 10:00 PM / 18:00 - 22:00)
+    let timeMultiplier = 1.0;
+    if (currentHour >= 18 && currentHour <= 22) {
+        timeMultiplier = 1.8 + (Math.sin(currentHour) * 0.2); // Up to 80% spike in the evening
+    } else if (currentHour >= 1 && currentHour <= 6) {
+        timeMultiplier = 0.7; // Late night drop
+    } else {
+        timeMultiplier = 1.2; // Daytime normal flow
+    }
 
-        if (activeSignal.remainingSec <= 0) {
-            clearInterval(countdownInterval);
-            activeSignal = null;
-            if (!currentSchedule) renderThinkingMode();
-            renderSmartHistoryAndStats();
-        } else {
-            renderActiveCard();
-        }
-    }, 1000);
+    // 2. Daily Organic Growth Factor (Increases slightly as time goes)
+    const startEpoch = new Date('2026-01-01').getTime();
+    const daysPassed = Math.floor((now.getTime() - startEpoch) / (1000 * 60 * 60 * 24));
+    const growthFactor = daysPassed * 0.5; // Subtle daily growth
+
+    // Calculate Target Base
+    let calculatedTarget = Math.floor((baseActiveUsers + growthFactor) * timeMultiplier);
+
+    // 3. Micro Fluctuation (Simulate real traders joining/leaving)
+    const microChange = Math.floor(Math.random() * 5) - 2; // -2 to +2 variation
+    let finalUserCount = calculatedTarget + microChange;
+
+    // Boundary Protection (Ensure minimum 20)
+    if (finalUserCount < 20) finalUserCount = 20;
+
+    // Update UI
+    const userCountElem = document.getElementById('active-users-count');
+    if (userCountElem) {
+        userCountElem.innerText = finalUserCount;
+    }
 }
 
-// 6. UI Renderers
-function renderActiveCard() {
-    const container = document.getElementById('active-signal-container');
-    let isCall = activeSignal.direction.includes("CALL");
-    let actionClass = isCall ? "action-call-box" : "action-put-box";
-    let actionTextClass = isCall ? "action-text-call" : "action-text-put";
-
-    let min = Math.floor(activeSignal.remainingSec / 60);
-    let sec = activeSignal.remainingSec % 60;
-    let timeFormatted = `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
-
-    container.innerHTML = `
-        <div class="quotex-active-card">
-            <div class="card-header-row">
-                <div class="asset-title-box">
-                    <span class="asset-title">${activeSignal.pair}</span>
-                    <button class="copy-btn" onclick="copyAsset('${activeSignal.pair}')"><i class="fa-regular fa-copy"></i></button>
-                </div>
-                <span class="tf-badge"><i class="fa-regular fa-clock"></i> ${activeSignal.timeframe}</span>
-            </div>
-
-            <div class="${actionClass}">
-                <div class="${actionTextClass}">${activeSignal.direction}</div>
-            </div>
-
-            <div class="card-stats-grid">
-                <div class="grid-cell">
-                    <span>💵 Entry Price</span>
-                    <strong class="mono">${activeSignal.entryPrice}</strong>
-                </div>
-                <div class="grid-cell">
-                    <span>⏳ Time Remaining</span>
-                    <strong class="mono" style="color:#FFD600;">${timeFormatted} Min</strong>
-                </div>
-                <div class="grid-cell">
-                    <span>⚠️ Martingale</span>
-                    <strong>${activeSignal.martingale}</strong>
-                </div>
-                <div class="grid-cell">
-                    <span>🎯 Win Probability</span>
-                    <strong style="color:var(--quotex-green);">${activeSignal.confidence}%</strong>
-                </div>
-            </div>
-
-            <div class="card-footer-info">
-                <span>Status: <b style="color:#FFD600;"><i class="fa-solid fa-spinner fa-spin"></i> TRADE RUNNING</b></span>
-                <span>Quotex Quantum Engine v2.4</span>
-            </div>
-        </div>
-    `;
-}
-
-function renderPreSignalAlert(schedule, secondsLeft) {
-    const container = document.getElementById('active-signal-container');
-    container.innerHTML = `
-        <div class="pre-signal-alert">
-            <h3><i class="fa-solid fa-triangle-exclamation"></i> UPCOMING TRADE ALERT</h3>
-            <p>প্রস্তুত থাকুন! আগামী <b>${secondsLeft} সেকেন্ডের</b> মধ্যে ট্রেড শট আসছে:</p>
-            <div style="font-size: 22px; font-weight:800; color:#fff;" class="mono">
-                ${schedule.pair} — ${schedule.timeframe}
-            </div>
-        </div>
-    `;
-}
-
-function renderThinkingMode() {
-    const container = document.getElementById('active-signal-container');
-    container.innerHTML = `
-        <div class="thinking-card">
-            <div class="radar-box">
-                <div class="radar-circle"></div>
-                <div class="radar-sweep"></div>
-                <i class="fa-solid fa-brain ai-brain-icon"></i>
-            </div>
-            <h3>Quantum Engine Analysis in Progress...</h3>
-            <p>আমাদের AI ইঞ্জিন গ্লোবাল ইন্ডিকেটর ও অ্যালগরিদম স্ক্যান করে পরবর্তী ট্রেডের জন্য কনফার্মেশন নিচ্ছে...</p>
-            
-            <div class="conformation-grid">
-                <div class="conf-item">
-                    <span><i class="fa-solid fa-chart-line"></i> RSI & Stochastic:</span>
-                    <strong>ANALYZING...</strong>
-                </div>
-                <div class="conf-item">
-                    <span><i class="fa-solid fa-layer-group"></i> Bollinger Bands:</span>
-                    <strong>SCANNING OTC...</strong>
-                </div>
-                <div class="conf-item">
-                    <span><i class="fa-solid fa-robot"></i> AI Conformation:</span>
-                    <strong>94.2% MATCH</strong>
-                </div>
-                <div class="conf-item">
-                    <span><i class="fa-solid fa-microchip"></i> Quantum Engine:</span>
-                    <strong>SEARCHING ENTRY</strong>
-                </div>
-            </div>
-        </div>
-    `;
-}
-
-// Initial Call
-renderSmartHistoryAndStats();
-      
+// Update Active Users every 4 seconds
+setInterval(calculateDynamicUsers, 4000);
+calculateDynamicUsers(); // Initial Call
