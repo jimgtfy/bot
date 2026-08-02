@@ -1,87 +1,112 @@
-/* ==========================================================================
-   SMART DYNAMIC ACTIVE USERS & NAVIGATION LOGIC
-   ========================================================================== */
+// ==========================================
+// QUANTUM AI - LIVING SCANNER ENGINE (v3.0)
+// ==========================================
 
-let soundEnabled = true;
+// 1. NAVIGATION TAB SWITCHER
+function switchTab(tabId, el) {
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
 
-// Tab Switcher Logic
-function switchTab(tabName, element) {
-    document.querySelectorAll('.app-section').forEach(sec => sec.classList.remove('active'));
-    document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
-    
-    document.getElementById(`section-${tabName}`).classList.add('active');
-    element.classList.add('active');
+    document.getElementById(`tab-${tabId}`).classList.add('active');
+    if(el) el.classList.add('active');
 }
 
-function switchTabDirect(tabName) {
-    const navBtn = document.getElementById(`btn-nav-${tabName}`);
-    if (navBtn) switchTab(tabName, navBtn);
-}
-
-// Sound Toggle
-function toggleSound() {
-    soundEnabled = !soundEnabled;
-    const btn = document.getElementById('sound-toggle');
-    const icon = document.getElementById('sound-icon');
+// 2. ACTIVE TRADERS SIMULATION (DYNAMIC PEAK TRAFFIC)
+function updateTradersCount() {
+    const el = document.getElementById('active-traders-count');
+    if (!el) return;
     
-    if (soundEnabled) {
-        btn.classList.add('active');
-        icon.className = 'fa-solid fa-volume-high';
-    } else {
-        btn.classList.remove('active');
-        icon.className = 'fa-solid fa-volume-xmark';
+    let now = new Date();
+    let hours = now.getHours();
+    let base = (hours >= 18 && hours <= 22) ? 220 : 120; // Peak traffic in evening
+    let current = parseInt(el.innerText);
+    let shift = Math.floor(Math.random() * 9) - 4; // -4 to +4 random shift
+    
+    let updated = Math.max(25, current + shift);
+    el.innerText = updated;
+}
+setInterval(updateTradersCount, 4000);
+
+// 3. LIVING SCANNER: MICRO-TICKS ORDER BOOK DYNAMIC ANIMATION
+function updateOrderBook() {
+    const askPrices = document.querySelectorAll('.ask-price');
+    const askVolumes = document.querySelectorAll('.ask-vol');
+    const bidPrices = document.querySelectorAll('.bid-price');
+    const bidVolumes = document.querySelectorAll('.bid-vol');
+
+    let basePrice = 1.08535 + (Math.random() * 0.00010);
+
+    // Update Ask Lines (Red)
+    askPrices.forEach((el, index) => {
+        let p = (basePrice + (0.00004 * (index + 1))).toFixed(5);
+        let v = (Math.floor(Math.random() * 500) * 100 + 10000).toLocaleString();
+        el.innerText = p;
+        if(askVolumes[index]) askVolumes[index].innerText = `${v} USD`;
+    });
+
+    // Update Bid Lines (Green)
+    bidPrices.forEach((el, index) => {
+        let p = (basePrice - (0.00003 * index)).toFixed(5);
+        let v = (Math.floor(Math.random() * 800) * 100 + 15000).toLocaleString();
+        el.innerText = p;
+        if(bidVolumes[index]) bidVolumes[index].innerText = `${v} USD`;
+    });
+}
+setInterval(updateOrderBook, 600); // Ticks update every 600ms
+
+// 4. LIVING SCANNER: INDICATOR BARS & LATENCY FLUIDITY
+function animateIndicators() {
+    // RSI Random Fluctuation (Oversold Range)
+    const rsiValEl = document.getElementById('rsi-val');
+    const rsiBarEl = document.getElementById('rsi-bar');
+    if (rsiValEl && rsiBarEl) {
+        let rsiVal = (22.0 + Math.random() * 5.5).toFixed(1);
+        rsiValEl.innerText = `Oversold (${rsiVal})`;
+        rsiBarEl.style.width = `${rsiVal}%`;
+    }
+
+    // Volatility Bar Pulsing
+    const volBarEl = document.getElementById('vol-bar');
+    if (volBarEl) {
+        let volPct = (75 + Math.random() * 15).toFixed(0);
+        volBarEl.style.width = `${volPct}%`;
+    }
+
+    // Node Confirmation Match Rate & Latency
+    const nodeMatchEl = document.getElementById('node-match');
+    const latencyEl = document.getElementById('node-latency');
+    if (nodeMatchEl) {
+        let match = (95.0 + Math.random() * 4.5).toFixed(1);
+        nodeMatchEl.innerText = `MATCHING ${match}%`;
+    }
+    if (latencyEl) {
+        let ms = Math.floor(10 + Math.random() * 8);
+        latencyEl.innerText = `${ms}ms`;
     }
 }
+setInterval(animateIndicators, 1400);
 
-// Live Clock Updater
-function updateClock() {
-    const now = new Date();
-    const timeStr = now.toLocaleTimeString('en-US', { hour12: true });
-    const clockElem = document.getElementById('live-clock');
-    if (clockElem) clockElem.innerText = timeStr;
-}
-setInterval(updateClock, 1000);
-
-/* --- DYNAMIC ACTIVE USERS ALGORITHM --- */
-let baseActiveUsers = 24; // Initial start (between 20 to 30)
-
-function calculateDynamicUsers() {
-    const now = new Date();
-    const currentHour = now.getHours();
-    
-    // 1. Calculate Evening Spike Logic (Peak Time: 6:00 PM - 10:00 PM / 18:00 - 22:00)
-    let timeMultiplier = 1.0;
-    if (currentHour >= 18 && currentHour <= 22) {
-        timeMultiplier = 1.8 + (Math.sin(currentHour) * 0.2); // Up to 80% spike in the evening
-    } else if (currentHour >= 1 && currentHour <= 6) {
-        timeMultiplier = 0.7; // Late night drop
-    } else {
-        timeMultiplier = 1.2; // Daytime normal flow
+// 5. LIVING SCANNER: LIVE LOG MATRIX TEXT CYCLE
+const statusMessages = [
+    "EUR/USD: Analyzing Candle Pattern...",
+    "EUR/USD: Scanning Liquidity Depth...",
+    "EUR/USD: Testing Support & Resistance...",
+    "EUR/USD: Validating Momentum Vector...",
+    "EUR/USD: Order Flow Confluence Ready..."
+];
+let msgIndex = 0;
+setInterval(() => {
+    const statusTextEl = document.getElementById('ai-status-text');
+    if (statusTextEl) {
+        msgIndex = (msgIndex + 1) % statusMessages.length;
+        statusTextEl.innerText = statusMessages[msgIndex];
     }
+}, 3000);
 
-    // 2. Daily Organic Growth Factor (Increases slightly as time goes)
-    const startEpoch = new Date('2026-01-01').getTime();
-    const daysPassed = Math.floor((now.getTime() - startEpoch) / (1000 * 60 * 60 * 24));
-    const growthFactor = daysPassed * 0.5; // Subtle daily growth
-
-    // Calculate Target Base
-    let calculatedTarget = Math.floor((baseActiveUsers + growthFactor) * timeMultiplier);
-
-    // 3. Micro Fluctuation (Simulate real traders joining/leaving)
-    const microChange = Math.floor(Math.random() * 5) - 2; // -2 to +2 variation
-    let finalUserCount = calculatedTarget + microChange;
-
-    // Boundary Protection (Ensure minimum 20)
-    if (finalUserCount < 20) finalUserCount = 20;
-
-    // Update UI
-    const userCountElem = document.getElementById('active-users-count');
-    if (userCountElem) {
-        userCountElem.innerText = finalUserCount;
-    }
+// 6. SYSTEM DOCUMENTATION MODAL CONTROLS
+function openDocModal() {
+    document.getElementById('doc-modal').style.display = 'flex';
 }
-
-// Update Active Users every 4 seconds
-setInterval(calculateDynamicUsers, 4000);
-calculateDynamicUsers(); // Initial Call
-           
+function closeDocModal() {
+    document.getElementById('doc-modal').style.display = 'none';
+           }
