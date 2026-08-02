@@ -1,140 +1,248 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quotex AI Quant Signal Engine</title>
-    <link rel="stylesheet" href="style.css">
-    
-    <!-- Google Fonts: Inter & JetBrains Mono -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-    
-    <!-- FontAwesome Vector Icons (Zero Image Policy) -->
+    <title>Quotex Quant Room - Binance Light Edition</title>
+    <!-- FontAwesome Icons & Google Fonts -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="light-theme">
 
-    <!-- Quotex Header Navbar -->
-    <header class="navbar">
-        <div class="logo">
-            <i class="fa-solid fa-bolt logo-bolt"></i>
-            <span>QUOTEX <span class="highlight">QUANT ROOM</span></span>
+    <!-- Top Real-Time Status Bar (Active Users & Clock) -->
+    <div class="top-status-bar">
+        <div class="active-users-pill">
+            <span class="pulse-green"></span>
+            <i class="fa-solid fa-users"></i>
+            <span>Active Traders: <strong id="active-users-count" class="mono">26</strong></span>
         </div>
-        
-        <div class="header-right">
+        <div class="top-clock mono" id="live-clock">12:00:00 PM</div>
+    </div>
+
+    <!-- Binance Navbar Header -->
+    <header class="binance-navbar">
+        <div class="nav-brand">
+            <i class="fa-solid fa-cubes-stacked brand-icon"></i>
+            <span class="brand-name">QUOTEX<span class="highlight">QUANT</span></span>
+            <span class="pro-badge">PRO v3.0</span>
+        </div>
+        <div class="nav-actions">
             <button id="sound-toggle" class="sound-btn active" onclick="toggleSound()">
-                <i class="fa-solid fa-volume-high" id="sound-icon"></i> Sound
+                <i id="sound-icon" class="fa-solid fa-volume-high"></i>
             </button>
-            <div class="clock-box mono" id="live-clock">00:00:00 AM</div>
         </div>
     </header>
 
-    <div class="main-layout">
-        
-        <!-- SECTION 1: LANDING & OVERVIEW -->
+    <!-- Main Container -->
+    <main class="app-container">
+
+        <!-- SECTION 1: HOME TAB -->
         <section id="section-home" class="app-section active">
-            <div class="hero-card">
-                <h1>কোটেক্স-এর জন্য ৯২% একুরেট অটোমেটেড সিগন্যাল</h1>
-                <p>Advanced Indicators + AI + Quantum Engine Analysis (Fixed 5-Min Alignment)</p>
-                <button class="cta-btn" onclick="switchTabDirect('signals')">
-                    <i class="fa-solid fa-satellite-dish"></i> গেট ইনস্ট্যান্ট অ্যাক্সেস
-                </button>
+            <div class="binance-hero-card">
+                <div class="hero-content">
+                    <span class="hero-tag"><i class="fa-solid fa-bolt"></i> AI Algorithmic Engine</span>
+                    <h2>Quotex 92% Automated Quantum Signals</h2>
+                    <p>Deep Market Scanning • Order Flow Depth Metrics • Neural Network Engine</p>
+                    <button class="binance-btn-primary" onclick="switchTabDirect('signals')">
+                        <i class="fa-solid fa-chart-line"></i> ACCESS SIGNAL ROOM
+                    </button>
+                </div>
             </div>
 
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <span>আজকের মোট সিগন্যাল</span>
-                    <p class="mono" id="total-count">0</p>
+            <div class="stats-overview-grid">
+                <div class="stat-binance-card">
+                    <div class="stat-header">
+                        <span>TODAY'S SIGNALS</span>
+                        <i class="fa-solid fa-layer-group icon-muted"></i>
+                    </div>
+                    <div class="stat-value mono" id="total-count">48</div>
+                    <div class="stat-footer text-muted">24h Automated Cycle</div>
                 </div>
-                <div class="stat-card win">
-                    <span>আজকের জয় (Win)</span>
-                    <p class="mono" id="win-count">0</p>
+
+                <div class="stat-binance-card green-border">
+                    <div class="stat-header">
+                        <span>TOTAL WINS</span>
+                        <i class="fa-solid fa-circle-check text-green"></i>
+                    </div>
+                    <div class="stat-value mono text-green" id="win-count">43</div>
+                    <div class="stat-footer text-green"><i class="fa-solid fa-arrow-trend-up"></i> High Win Ratio</div>
                 </div>
-                <div class="stat-card loss">
-                    <span>আজকের হার (Loss)</span>
-                    <p class="mono" id="loss-count">0</p>
+
+                <div class="stat-binance-card red-border">
+                    <div class="stat-header">
+                        <span>TOTAL LOSSES</span>
+                        <i class="fa-solid fa-circle-xmark text-red"></i>
+                    </div>
+                    <div class="stat-value mono text-red" id="loss-count">5</div>
+                    <div class="stat-footer text-red">Risk Protocol Active</div>
                 </div>
-                <div class="stat-card rate">
-                    <span>আজকের উইন রেট</span>
-                    <p class="mono" id="win-rate">0%</p>
+
+                <div class="stat-binance-card gold-border">
+                    <div class="stat-header">
+                        <span>WIN RATE</span>
+                        <i class="fa-solid fa-trophy text-gold-dark"></i>
+                    </div>
+                    <div class="stat-value mono text-gold-dark" id="win-rate">89.5%</div>
+                    <div class="stat-footer text-gold-dark">Verified Quantum Engine</div>
                 </div>
             </div>
         </section>
 
-        <!-- SECTION 2: LIVE SIGNAL ROOM -->
+        <!-- SECTION 2: SIGNALS TAB -->
         <section id="section-signals" class="app-section">
             
-            <!-- Asset Filter Header -->
-            <div class="filter-bar">
-                <div class="filter-group">
-                    <button class="filter-chip active" onclick="filterAssets('ALL', this)">All</button>
-                    <button class="filter-chip" onclick="filterAssets('OTC', this)">OTC Pairs</button>
-                    <button class="filter-chip" onclick="filterAssets('CRYPTO', this)">Crypto</button>
-                    <button class="filter-chip" onclick="filterAssets('FOREX', this)">Forex</button>
-                </div>
-                <div class="live-status">
-                    <span class="live-dot"></span> Quantum Engine Online
-                </div>
-            </div>
-
-            <!-- Active Signal Container (Dynamic: Thinking Mode or Active Card) -->
             <div id="active-signal-container">
-                <!-- Javascript will render Active Signal, Alert Box, or Thinking Mode -->
+                
+                <!-- Thinking Mode Panel -->
+                <div class="binance-card thinking-card-advanced">
+                    <div class="thinking-header-bar">
+                        <div class="engine-status">
+                            <span class="scanning-pulse"></span>
+                            <span class="engine-title">QUANTUM ENGINE ANALYZING MARKET...</span>
+                        </div>
+                        <div class="scanner-tag mono">OTC SCANNER v4.2</div>
+                    </div>
+
+                    <div class="thinking-grid-container">
+                        <div class="visual-panel">
+                            <div class="radar-visualizer">
+                                <div class="radar-grid-bg"></div>
+                                <div class="radar-sweep-line"></div>
+                                <div class="ai-core-hub">
+                                    <i class="fa-solid fa-brain ai-pulsing-brain"></i>
+                                    <span class="core-text">QUANTUM AI</span>
+                                </div>
+                            </div>
+
+                            <div class="order-book-preview">
+                                <div class="ob-title">Live Order Flow Depth (Micro-Ticks)</div>
+                                <div class="ob-rows">
+                                    <div class="ob-row ask"><span class="mono">1.08542</span> <span class="mono count">42,850 USD</span></div>
+                                    <div class="ob-row ask"><span class="mono">1.08540</span> <span class="mono count">18,200 USD</span></div>
+                                    <div class="ob-row bid"><span class="mono">1.08538</span> <span class="mono count">89,100 USD</span></div>
+                                    <div class="ob-row bid"><span class="mono">1.08535</span> <span class="mono count">34,500 USD</span></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="indicators-matrix-panel">
+                            <div class="ind-card">
+                                <div class="ind-info">
+                                    <span><i class="fa-solid fa-chart-line text-gold-dark"></i> RSI (14) Momentum:</span>
+                                    <strong class="mono text-green">Oversold (24.8)</strong>
+                                </div>
+                                <div class="progress-bar-bg"><div class="progress-fill green" style="width: 82%;"></div></div>
+                            </div>
+
+                            <div class="ind-card">
+                                <div class="ind-info">
+                                    <span><i class="fa-solid fa-layer-group text-gold-dark"></i> Bollinger Bands Breakout:</span>
+                                    <strong class="mono text-gold-dark">Lower Band Test</strong>
+                                </div>
+                                <div class="progress-bar-bg"><div class="progress-fill gold" style="width: 68%;"></div></div>
+                            </div>
+
+                            <div class="ind-card">
+                                <div class="ind-info">
+                                    <span><i class="fa-solid fa-wave-square text-gold-dark"></i> Order Flow Volatility:</span>
+                                    <strong class="mono text-green">High Volume Spike</strong>
+                                </div>
+                                <div class="progress-bar-bg"><div class="progress-fill green" style="width: 91%;"></div></div>
+                            </div>
+
+                            <div class="ai-bot-node-card">
+                                <div class="bot-header">
+                                    <div class="bot-name"><i class="fa-solid fa-robot text-gold-dark"></i> AI Bot Node #09 Confirmation</div>
+                                    <span class="bot-status-badge">MATCHING 96.4%</span>
+                                </div>
+                                <div class="bot-live-data grid-2">
+                                    <div>Latency: <span class="mono text-green">12ms</span></div>
+                                    <div>Pattern: <span class="mono text-gold-dark">Bullish Reversal</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="thinking-footer-stream">
+                        <span class="stream-item"><i class="fa-solid fa-microchip"></i> EUR/USD: Analyzing Candle Pattern...</span>
+                        <span class="stream-item"><i class="fa-solid fa-shield-halved"></i> Risk Control: Safe Execution</span>
+                    </div>
+                </div>
+
+                <!-- Pre-Signal Alert Card -->
+                <div class="binance-card pre-signal-alert-binance" style="margin-top: 16px;">
+                    <div class="alert-top-row">
+                        <span class="alert-badge"><i class="fa-solid fa-triangle-exclamation"></i> UPCOMING TRADE DETECTED</span>
+                        <span class="timer-badge mono">24s REMAINING</span>
+                    </div>
+                    <div class="alert-body">
+                        <h3>Get Ready! Trade shot execution in 24 seconds:</h3>
+                        <div class="pair-target mono">EUR/USD (OTC) — M5 (5 Minutes)</div>
+                    </div>
+                    <div class="alert-progress"><div class="alert-progress-fill" style="width: 80%;"></div></div>
+                </div>
+
             </div>
 
-            <!-- Processed / Closed Cards Gallery -->
-            <div class="processed-container">
-                <h3><i class="fa-solid fa-clock-rotate-left"></i> সদ্য সমাপ্ত সিগন্যালসমূহ (Today's Closed)</h3>
-                <div id="processed-cards-grid" class="cards-grid">
-                    <p class="no-data">ডাটা প্রসেস হচ্ছে...</p>
+        </section>
+
+        <!-- SECTION 3: ANALYTICS TAB -->
+        <section id="section-analytics" class="app-section">
+            <div class="binance-card">
+                <div class="card-title-bar">
+                    <h3><i class="fa-solid fa-list-check text-gold-dark"></i> Today's Performance History</h3>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="binance-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Time</th>
+                                <th>Asset Pair</th>
+                                <th>Direction</th>
+                                <th>Duration</th>
+                                <th>Result</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-tbody">
+                            <tr>
+                                <td>1</td>
+                                <td class="mono">12:10</td>
+                                <td><b>EUR/USD (OTC)</b></td>
+                                <td class="text-green">CALL (UP) ⬆️</td>
+                                <td>M5 (5 Min)</td>
+                                <td><span class="badge-win">WIN</span></td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td class="mono">11:50</td>
+                                <td><b>GBP/USD (OTC)</b></td>
+                                <td class="text-red">PUT (DOWN) ⬇️</td>
+                                <td>M5 (5 Min)</td>
+                                <td><span class="badge-win">WIN</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </section>
 
-        <!-- SECTION 3: ANALYTICS & HISTORY -->
-        <section id="section-analytics" class="app-section">
-            <div class="section-title">
-                <h2><i class="fa-solid fa-list-check"></i> আজকের পারফরম্যান্স ইতিহাস</h2>
-            </div>
+    </main>
 
-            <div class="table-responsive">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>শুরুর সময়</th>
-                            <th>অ্যাসেট</th>
-                            <th>দিক (Direction)</th>
-                            <th>মেয়াদ</th>
-                            <th>ফলাফল</th>
-                        </tr>
-                    </thead>
-                    <tbody id="history-tbody">
-                        <tr>
-                            <td colspan="6" style="text-align:center; color:#90A4AE;">ডাটাবেজ থেকে ডাটা লোড হচ্ছে...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-    </div>
-
-    <!-- Mobile Fixed Bottom Navigation -->
-    <nav class="bottom-nav">
-        <button class="nav-item active" id="btn-nav-home" onclick="switchTab('home', this)">
+    <!-- Binance Bottom Navigation Bar -->
+    <nav class="binance-bottom-nav">
+        <button id="btn-nav-home" class="nav-item active" onclick="switchTab('home', this)">
             <i class="fa-solid fa-house"></i>
             <span>Home</span>
         </button>
-        <button class="nav-item" id="btn-nav-signals" onclick="switchTab('signals', this)">
-            <i class="fa-solid fa-bolt"></i>
+        <button id="btn-nav-signals" class="nav-item" onclick="switchTab('signals', this)">
+            <i class="fa-solid fa-chart-line"></i>
             <span>Signals</span>
         </button>
-        <button class="nav-item" id="btn-nav-analytics" onclick="switchTab('analytics', this)">
+        <button id="btn-nav-analytics" class="nav-item" onclick="switchTab('analytics', this)">
             <i class="fa-solid fa-chart-pie"></i>
             <span>Analytics</span>
         </button>
@@ -142,4 +250,5 @@
 
     <script src="script.js"></script>
 </body>
-</html>
+    </html>
+    
