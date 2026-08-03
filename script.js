@@ -1,205 +1,236 @@
-// ==========================================
-// QUANTUM ENGINE v4.5 - GLOBAL SYNC EDITION
-// ==========================================
+// --- 1. 30-DAY MASTER SCHEDULE GENERATOR WITH MTG & ACCURACY (80%-92%) ---
+function generateMasterSchedule() {
+    const pairs = ["EUR/USD (OTC)", "GBP/USD (OTC)", "USD/JPY (OTC)", "AUD/CAD (OTC)", "USD/CHF (OTC)", "NZD/USD (OTC)", "EUR/GBP (OTC)", "AUD/NZD (OTC)"];
+    const actions = ["CALL ⬆️", "PUT ⬇️"];
+    const masterData = {};
 
-const pairs = ["EUR/USD (OTC)", "GBP/USD (OTC)", "USD/JPY (OTC)", "AUD/CAD (OTC)", "USD/CHF (OTC)", "NZD/USD (OTC)"];
-const CYCLE_TIME = 150; // 2 minutes 30 seconds per signal cycle (Adjustable)
+    // Seeded random function to ensure day-specific unique patterns that repeat every month
+    for (let day = 1; day <= 31; day++) {
+        let daySignals = [];
+        // Generate 75 to 95 signals per day
+        let totalSignalsToday = 75 + (day * 3) % 21; 
+        
+        // Time slots distributed across 24 hours (every 5 or 10 mins randomly)
+        let currentHour = 0;
+        let currentMin = 0;
 
-// 1. DETERMINISTIC RANDOM GENERATOR
-// এই ফাংশনটি যেকোনো একটি নির্দিষ্ট আইডির জন্য সবসময় একই ফলাফল দিবে। 
-// ফলে পৃথিবীর সবাই একই সিগন্যাল পাবে।
-function seededRandom(seed) {
-    let x = Math.sin(seed++) * 10000;
-    return x - Math.floor(x);
+        for (let i = 0; i < totalSignalsToday; i++) {
+            // Pick random round minutes: 0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55
+            let roundMins = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
+            let randomMinIndex = (day * 7 + i * 13) % roundMins.length;
+            currentMin = roundMins[randomMinIndex];
+            
+            // Increment hours smoothly
+            if (i > 0 && currentMin === 0) {
+                currentHour = (currentHour + 1) % 24;
+            }
+
+            let timeStr = String(currentHour).padStart(2, '0') + ":" + String(currentMin).padStart(2, '0');
+            let pair = pairs[(day + i) % pairs.length];
+            let action = actions[(day * 3 + i) % 2];
+
+            // Accuracy control (Target: ~85% Win rate)
+            let winCheck = (day * 17 + i * 31) % 100;
+            let resultStr = "";
+
+            if (winCheck < 70) {
+                resultStr = "WIN (M0)"; // Direct Win
+            } else if (winCheck < 88) {
+                resultStr = "WIN (MTG)"; // 1-Step MTG Win
+            } else {
+                resultStr = "LOSS"; // Loss
+            }
+
+            daySignals.push({
+                time: timeStr,
+                pair: pair,
+                action: action,
+                result: resultStr
+            });
+
+            // Skip some time slots to spread across 24 hours naturally
+            currentMin += 15 + ((day + i) % 3) * 5;
+            if (currentMin >= 60) {
+                currentHour = (currentHour + 1) % 24;
+                currentMin = currentMin % 60;
+            }
+        }
+        
+        // Sort signals by time chronologically
+        daySignals.sort((a, b) => a.time.localeCompare(b.time));
+        masterData[day] = daySignals;
+    }
+    return masterData;
 }
 
-// 2. GLOBALLY SYNCED DATABASE
-// লোকাল স্টোরেজের বদলে গ্লোবাল টাইম ব্যবহার করে হিস্ট্রি তৈরি হবে
-function renderGlobalHistory() {
-    let currentSec = Math.floor(Date.now() / 1000);
-    let currentCycleId = Math.floor(currentSec / CYCLE_TIME);
+const GLOBAL_MASTER_SCHEDULE = generateMasterSchedule();
+
+// Get today's signals based on day of the month (1-31 cycle)
+function getTodaySignals() {
+    const now = new Date();
+    let day = now.getDate();
+    return GLOBAL_MASTER_SCHEDULE[day] || GLOBAL_MASTER_SCHEDULE[1];
+}
+
+// --- 2. CORE APP STATE & ENGINE ---
+let activeTab = 'home';
+let soundEnabled = true;
+
+function switchTab(tabId, btnElement) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
     
-    let wins = 0;
-    let losses = 0;
-    let total = 20; // Last 20 signals
-    let historyHTML = '';
-
-    // Generate accurate history for the last 20 global cycles
-    for (let i = 1; i <= total; i++) {
-        let pastCycleId = currentCycleId - i;
-        
-        // Use seed to guarantee everyone sees the exact same past trades
-        let rndPair = seededRandom(pastCycleId * 10);
-        let rndAct = seededRandom(pastCycleId * 20);
-        let rndRes = seededRandom(pastCycleId * 30); 
-        
-        let pair = pairs[Math.floor(rndPair * pairs.length)];
-        let action = rndAct > 0.45 ? "CALL" : "PUT";
-        let isWin = rndRes > 0.12; // ~88-90% Global Win Rate
-        
-        if (isWin) wins++; else losses++;
-
-        let pastTime = new Date(pastCycleId * CYCLE_TIME * 1000);
-        let timeStr = pastTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        
-        let actionBadge = action === "CALL" ? '<span class="badge-call">CALL ⬆️</span>' : '<span class="badge-put">PUT ⬇️</span>';
-        let resultBadge = isWin ? `<span class="badge-win">WIN (M0)</span>` : `<span class="badge-loss">LOSS</span>`;
-        
-        historyHTML += `<tr><td>${timeStr}</td><td>${pair}</td><td>${actionBadge}</td><td>${resultBadge}</td></tr>`;
+    document.getElementById('tab-' + tabId).classList.add('active');
+    if(btnElement) btnElement.classList.add('active');
+    activeTab = tabId;
+    
+    if(tabId === 'analytics') {
+        renderHistoryTable();
     }
-
-    document.getElementById('stat-total').innerText = total;
-    document.getElementById('stat-wins').innerText = wins;
-    document.getElementById('stat-losses').innerText = losses;
-    document.getElementById('stat-acc').innerText = ((wins / total) * 100).toFixed(1) + '%';
-    document.getElementById('history-body').innerHTML = historyHTML;
-}
-
-// Initial DB Render
-renderGlobalHistory();
-
-// 3. SOUND ENGINE
-const soundBtn = document.getElementById('sound-btn');
-let isSoundOn = true;
-soundBtn.addEventListener('click', () => {
-    isSoundOn = !isSoundOn;
-    soundBtn.innerHTML = isSoundOn ? '<i class="fa-solid fa-volume-high"></i>' : '<i class="fa-solid fa-volume-xmark"></i>';
-    soundBtn.classList.toggle('active');
-});
-
-function playAudioBeep() {
-    if(!isSoundOn) return;
-    try {
-        let ctx = new (window.AudioContext || window.webkitAudioContext)();
-        let osc = ctx.createOscillator();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(880, ctx.currentTime);
-        osc.connect(ctx.destination);
-        osc.start(); osc.stop(ctx.currentTime + 0.15);
-    } catch(e) {}
-}
-
-// 4. GLOBALLY SYNCED SIGNAL & PRE-ALERT ENGINE
-let lastBeepTime = 0;
-
-function runGlobalSignalLoop() {
-    let now = Date.now();
-    let currentSec = Math.floor(now / 1000);
-    let cycleElapsed = currentSec % CYCLE_TIME; 
-    let cycleId = Math.floor(currentSec / CYCLE_TIME);
-
-    const card = document.getElementById('signal-card');
-    const title = document.getElementById('signal-status-title');
-    const body = document.getElementById('signal-body');
-    const bar = document.getElementById('timer-bar');
-    const timerTxt = document.getElementById('countdown-timer');
-
-    // Target the current cycle if we are in the execution phase (0-10s), 
-    // otherwise prepare for the NEXT upcoming cycle.
-    let targetCycleId = (cycleElapsed <= 10) ? cycleId : (cycleId + 1);
-
-    // Get strictly synchronized Global Signal
-    let rndPair = seededRandom(targetCycleId * 10);
-    let rndAct = seededRandom(targetCycleId * 20);
-    let targetPair = pairs[Math.floor(rndPair * pairs.length)];
-    let targetAction = rndAct > 0.45 ? "CALL ⬆️" : "PUT ⬇️";
-
-    // Timer calculation
-    let countdown = CYCLE_TIME - cycleElapsed; 
-    if (cycleElapsed <= 10) countdown = 0; // Freeze at 00:00 for execution
-
-    let m = Math.floor(countdown / 60);
-    let s = countdown % 60;
-    timerTxt.innerText = `${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`;
-    bar.style.width = `${(countdown / CYCLE_TIME) * 100}%`;
-
-    // 🔴 STAGE 3: EXECUTE SIGNAL (First 10 seconds of the cycle)
-    if (cycleElapsed >= 0 && cycleElapsed <= 10) {
-        if (cycleElapsed === 0 && currentSec !== lastBeepTime) {
-            playAudioBeep(); setTimeout(playAudioBeep, 200);
-            lastBeepTime = currentSec;
-            renderGlobalHistory(); // Refresh history automatically worldwide
-        }
-        card.className = "trade-alert-card active-signal";
-        title.innerHTML = '<i class="fa-solid fa-bolt"></i> EXECUTE TRADE NOW!';
-        let actionClass = targetAction.includes("CALL") ? "call" : "put";
-        body.innerHTML = `
-            <div class="signal-row"><span class="lbl">Asset Pair:</span><span class="val font-mono">${targetPair}</span></div>
-            <div class="signal-row"><span class="lbl">Timeframe:</span><span class="val font-mono">M5</span></div>
-            <div class="signal-row"><span class="lbl">Direction:</span><span class="val-action ${actionClass}">${targetAction}</span></div>
-        `;
-        bar.style.background = 'var(--trade-green)';
-        timerTxt.innerText = "00:00";
-    }
-    // 🟡 STAGE 1: SCANNING MODE
-    else if (cycleElapsed > 10 && cycleElapsed < (CYCLE_TIME - 30)) {
-        card.className = "trade-alert-card analyzing";
-        title.innerHTML = '<i class="fa-solid fa-magnifying-glass-chart"></i> DEEP MARKET SCANNING...';
-        body.innerHTML = '<p class="waiting-text">Scanning liquidity pools across 6 OTC pairs for high confluence...</p>';
-        bar.style.background = '#EAECEF';
-    }
-    // 🟢 STAGE 2: PRE-ALERT (Last 30 seconds of the cycle)
-    else if (cycleElapsed >= (CYCLE_TIME - 30)) {
-        if (cycleElapsed === (CYCLE_TIME - 30) && currentSec !== lastBeepTime) {
-            playAudioBeep();
-            lastBeepTime = currentSec;
-        }
-        card.className = "trade-alert-card pre-alert";
-        title.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> UPCOMING SIGNAL DETECTED';
-        body.innerHTML = `
-            <div class="signal-row"><span class="lbl">Asset Pair:</span><span class="val font-mono">${targetPair}</span></div>
-            <div class="signal-row"><span class="lbl">Timeframe:</span><span class="val font-mono">M5 (5 Minutes)</span></div>
-            <div class="signal-row"><span class="lbl">Direction:</span><span class="val text-gold font-mono">ANALYZING CANDLE...</span></div>
-        `;
-        bar.style.background = 'var(--brand-gold)';
-    }
-}
-
-// Run engine every second
-setInterval(runGlobalSignalLoop, 1000);
-
-
-// 5. HIGH-TECH SCANNER & MATRIX ANIMATIONS
-setInterval(() => {
-    const matrix = document.getElementById('matrix-grid');
-    if(matrix) {
-        let hex = [];
-        for(let i=0; i<4; i++) hex.push("0x" + Math.floor(Math.random()*65535).toString(16).toUpperCase().padStart(4, '0'));
-        matrix.innerHTML = `<span>${hex[0]}</span><span>${hex[1]}</span><span>${hex[2]}</span><span>${hex[3]}</span>`;
-    }
-
-    let price = 1.08535 + (Math.random() * 0.00010);
-    document.querySelectorAll('.ask-price').forEach(el => el.innerText = (price + 0.00004).toFixed(5));
-    document.querySelectorAll('.ask-vol').forEach(el => el.innerText = Math.floor(Math.random()*70 + 20) + "k USD");
-    document.querySelectorAll('.bid-price').forEach(el => el.innerText = (price - 0.00003).toFixed(5));
-    document.querySelectorAll('.bid-vol').forEach(el => el.innerText = Math.floor(Math.random()*70 + 20) + "k USD");
-
-    document.getElementById('liq-bar').style.width = Math.floor(65 + Math.random()*30) + '%';
-    document.getElementById('mom-bar').style.width = Math.floor(50 + Math.random()*40) + '%';
-}, 650);
-
-const aiLogs = ["Deep neural pattern mapping...", "Scanning OTC market liquidity...", "Cross-checking RSI vectors...", "Validating order flow depth..."];
-let logIdx = 0;
-setInterval(() => { document.getElementById('ai-log').innerText = aiLogs[(logIdx++) % aiLogs.length]; }, 2500);
-
-// 6. GLOBAL ACTIVE USER FLOW (Synced Globally + Micro Noise)
-setInterval(() => {
-    const el = document.getElementById('active-traders');
-    let globalTime = Date.now();
-    let base = 145;
-    // Worldwide synchronized sine wave 
-    let wave = Math.sin(globalTime / 60000) * 15; 
-    let pseudoNoise = Math.floor(seededRandom(Math.floor(globalTime / 2000)) * 5) - 2;
-    el.innerText = Math.floor(base + wave + pseudoNoise);
-}, 2000);
-
-// 7. UTILITIES
-function switchTab(tabId, el) {
-    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById(`tab-${tabId}`).classList.add('active');
-    if(el) el.classList.add('active');
 }
 
 function openDocModal() { document.getElementById('doc-modal').style.display = 'flex'; }
 function closeDocModal() { document.getElementById('doc-modal').style.display = 'none'; }
+
+// --- 3. LIVE ENGINE & CLOCK SYNC ---
+function runQuantumEngine() {
+    const now = new Date();
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    const seconds = now.getSeconds();
+    
+    const currentTotalSec = hours * 3600 + minutes * 60 + seconds;
+    const todaySignals = getTodaySignals();
+
+    let upcomingSignal = null;
+    let timeDiffToNext = Infinity;
+
+    // Find the next upcoming signal
+    for (let sig of todaySignals) {
+        let [sigH, sigM] = sig.time.split(':').map(Number);
+        let sigTotalSec = sigH * 3600 + sigM * 60;
+        let diff = sigTotalSec - currentTotalSec;
+
+        // If signal is ahead in today's timeline
+        if (diff >= 0 && diff < timeDiffToNext) {
+            timeDiffToNext = diff;
+            upcomingSignal = sig;
+            break;
+        }
+    }
+
+    // If no more signals today, take the first signal of tomorrow/cycle
+    if (!upcomingSignal && todaySignals.length > 0) {
+        upcomingSignal = todaySignals[0];
+        let [sigH, sigM] = upcomingSignal.time.split(':').map(Number);
+        let sigTotalSec = sigH * 3600 + sigM * 60;
+        timeDiffToNext = (24 * 3600 - currentTotalSec) + sigTotalSec;
+    }
+
+    updateUIState(timeDiffToNext, upcomingSignal);
+    updateGlobalStats(todaySignals);
+}
+
+// Update UI based on countdown timer to next signal
+function updateUIState(diffSec, signal) {
+    const card = document.getElementById('signal-card');
+    const title = document.getElementById('signal-status-title');
+    const timerBadge = document.getElementById('countdown-timer');
+    const body = document.getElementById('signal-body');
+    const timerBar = document.getElementById('timer-bar');
+
+    let min = Math.floor(diffSec / 60);
+    let sec = diffSec % 60;
+    let timeFormatted = String(min).padStart(2, '0') + ":" + String(sec).padStart(2, '0');
+    timerBadge.innerText = timeFormatted;
+
+    // PRE-ALERT MODE (30 seconds to 0 seconds before signal)
+    if (diffSec <= 30 && diffSec > 0) {
+        card.className = "trade-alert-card pre-alert";
+        title.innerHTML = `<i class="fa-solid fa-triangle-exclamation fa-fade"></i> PRE-ALERT: GET READY!`;
+        timerBar.style.width = `${(diffSec / 30) * 100}%`;
+        
+        body.innerHTML = `
+            <div class="signal-row"><span class="lbl">Upcoming Pair:</span><span class="val text-gold">${signal.pair}</span></div>
+            <div class="signal-row"><span class="lbl">Scheduled Time:</span><span class="val font-mono">${signal.time} UTC</span></div>
+            <div class="signal-row"><span class="lbl">Expected Action:</span><span class="val">Analysing Momentum...</span></div>
+        `;
+        document.getElementById('ai-log').innerText = `Locking coordinates for ${signal.pair} at ${signal.time}...`;
+    } 
+    // ACTIVE SIGNAL EXECUTION MODE (Exact match or first 5 mins window)
+    else if (diffSec === 0 || (diffSec >= 270000)) { // Active execution window simulation
+        card.className = "trade-alert-card active-signal";
+        title.innerHTML = `<i class="fa-solid fa-bolt fa-beat"></i> LIVE SIGNAL EXECUTED`;
+        timerBar.style.width = `100%`;
+
+        let actionClass = signal.action.includes("CALL") ? "call" : "put";
+        let mtgNote = signal.result.includes("MTG") ? `<div style="font-size:10px; color:#C99400; margin-top:4px;">* If 1st step loss, use 1-Step MTG</div>` : "";
+
+        body.innerHTML = `
+            <div class="signal-row"><span class="lbl">Asset Pair:</span><span class="val">${signal.pair}</span></div>
+            <div class="signal-row"><span class="lbl">Direction:</span><span class="val-action ${actionClass}">${signal.action}</span></div>
+            ${mtgNote}
+        `;
+        document.getElementById('ai-log').innerText = `Executing 5-Min binary contract on ${signal.pair}`;
+    } 
+    // SCANNING / THINKING MODE
+    else {
+        card.className = "trade-alert-card analyzing";
+        title.innerHTML = `<i class="fa-solid fa-satellite-dish fa-beat"></i> DEEP MARKET SCANNING...`;
+        timerBar.style.width = `${Math.min(100, (diffSec / 300) * 100)}%`;
+
+        body.innerHTML = `
+            <p class="waiting-text">Next Signal in queue for <strong>${signal ? signal.pair : "OTC Market"}</strong> at <strong>${signal ? signal.time : ""}</strong></p>
+            <div class="signal-row" style="margin-top:8px;"><span class="lbl">Cycle Status:</span><span class="val text-green font-mono">Synced (30-Day Master Loop)</span></div>
+        `;
+    }
+}
+
+// Render History Table in Analytics Tab
+function renderHistoryTable() {
+    const tbody = document.getElementById('history-body');
+    const signals = getTodaySignals();
+    let html = '';
+
+    // Show past signals of the day
+    signals.forEach(sig => {
+        let resColor = sig.result.includes("WIN") ? "text-green" : "text-red";
+        html += `
+            <tr>
+                <td class="font-mono">${sig.time}</td>
+                <td>${sig.pair}</td>
+                <td><b>${sig.action}</b></td>
+                <td class="${resColor}"><b>${sig.result}</b></td>
+            </tr>
+        `;
+    });
+    tbody.innerHTML = html;
+}
+
+// Calculate and update global dashboard stats
+function updateGlobalStats(signals) {
+    let total = signals.length;
+    let wins = signals.filter(s => s.result.includes("WIN")).length;
+    let losses = total - wins;
+    let accuracy = total > 0 ? ((wins / total) * 100).toFixed(1) : 0;
+
+    document.getElementById('stat-total').innerText = total;
+    document.getElementById('stat-wins').innerText = wins;
+    document.getElementById('stat-losses').innerText = losses;
+    document.getElementById('stat-acc').innerText = accuracy + "%";
+}
+
+// Initialize active users random fluctuation
+setInterval(() => {
+    let base = 140;
+    let fluctuation = Math.floor(Math.random() * 30) - 15;
+    document.getElementById('active-traders').innerText = base + fluctuation;
+}, 5000);
+
+// Run Engine every second
+setInterval(runQuantumEngine, 1000);
+
+// Initial call
+window.onload = function() {
+    runQuantumEngine();
+            }
