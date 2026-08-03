@@ -21,7 +21,7 @@
             <div class="traders-count" title="Live Users">
                 <span class="pulse-dot"></span>
                 <i class="fa-solid fa-users"></i>
-                <span id="active-traders">142</span>
+                <span id="active-traders">154</span>
             </div>
             <button class="icon-btn" onclick="openDocModal()"><i class="fa-solid fa-book"></i></button>
             <button id="sound-btn" class="icon-btn active"><i class="fa-solid fa-volume-high"></i></button>
@@ -51,68 +51,111 @@
             <div class="guide-card mt-15">
                 <div class="guide-header"><i class="fa-solid fa-bullseye"></i> How to Execute</div>
                 <div class="guide-steps">
-                    <div class="step-item"><span class="step-num">1</span><div class="step-text"><strong>Wait:</strong> Watch the countdown timer. At 30s, a Pre-Alert will show the Asset.</div></div>
-                    <div class="step-item"><span class="step-num">2</span><div class="step-text"><strong>Prepare:</strong> Open Quotex and set the pair & 5-Min timeframe.</div></div>
-                    <div class="step-item"><span class="step-num">3</span><div class="step-text"><strong>Execute:</strong> At exactly <code>00:00</code>, the CALL/PUT direction will reveal. Execute instantly!</div></div>
+                    <div class="step-item"><span class="step-num">1</span><div class="step-text"><strong>Pre-Alert:</strong> 20-30 seconds before the signal, an alert will show the upcoming pair.</div></div>
+                    <div class="step-item"><span class="step-num">2</span><div class="step-text"><strong>Execute:</strong> At exact round time (00, 05, 10...), the CALL/PUT direction will appear.</div></div>
+                    <div class="step-item"><span class="step-num">3</span><div class="step-text"><strong>Result:</strong> After 5 minutes, the outcome is automatically saved to history.</div></div>
                 </div>
             </div>
         </section>
 
-        <!-- TAB 2: SIGNALS & SCANNER -->
+        <!-- TAB 2: SIGNALS & ADVANCED SCANNER -->
         <section id="tab-signals" class="tab-content">
             
             <!-- DYNAMIC SIGNAL CARD -->
             <div id="signal-card" class="trade-alert-card analyzing">
                 <div class="alert-top">
-                    <span class="alert-title" id="signal-status-title"><i class="fa-solid fa-magnifying-glass-chart"></i> ANALYZING MARKET...</span>
-                    <span class="timer-badge" id="countdown-timer">--:--</span>
+                    <span class="alert-title" id="signal-status-title">
+                        <i class="fa-solid fa-satellite-dish fa-beat"></i> DEEP MARKET SCANNING...
+                    </span>
+                    <span class="timer-badge" id="countdown-timer">00:38</span>
                 </div>
                 
-                <!-- This box changes state dynamically -->
                 <div class="signal-details" id="signal-body">
-                    <p class="waiting-text">Scanning 6 major OTC pairs for high-confluence volume spikes...</p>
+                    <p class="waiting-text">Scanning liquidity pools across OTC pairs for high-confluence...</p>
                 </div>
                 
-                <div class="bar-bg"><div id="timer-bar" class="bar-fill gold" style="width: 100%;"></div></div>
+                <div class="bar-bg"><div id="timer-bar" class="bar-fill gold" style="width: 75%;"></div></div>
             </div>
 
-            <!-- HIGH-TECH THINKING MODE -->
-            <div class="scanner-card">
-                <div class="radar-box">
-                    <div class="radar-sweep"></div>
-                    <div class="brain-core">
-                        <i class="fa-solid fa-network-wired"></i>
-                        <span>NEURAL NET</span>
+            <!-- HIGH-TECH THINKING MODE UI WITH MINI CHART ANIMATION -->
+            <div class="cyber-scanner-container">
+                
+                <!-- Holographic Radar & Mini Chart Pattern Container -->
+                <div class="scanner-visual-row">
+                    <div class="holo-core-wrapper">
+                        <div class="radar-ring ring-1"></div>
+                        <div class="radar-ring ring-2"></div>
+                        <div class="radar-ring ring-3"></div>
+                        <div class="cyber-radar-sweep"></div>
+                        
+                        <div class="ai-hologram-brain">
+                            <i class="fa-solid fa-network-wired"></i>
+                            <span class="core-status">NEURAL NET</span>
+                        </div>
+                    </div>
+
+                    <!-- Mini Live Candlestick / Chart Pattern Animation Box -->
+                    <div class="mini-chart-box">
+                        <div class="chart-header"><span>PRICE ACTION PATTERN</span><span class="text-green">LIVE</span></div>
+                        <div class="candlestick-bars">
+                            <div class="c-bar down" style="height: 40%;"></div>
+                            <div class="c-bar up" style="height: 65%;"></div>
+                            <div class="c-bar down" style="height: 50%;"></div>
+                            <div class="c-bar up" style="height: 85%;"></div>
+                            <div class="c-bar up" style="height: 95%;"></div>
+                            <div class="c-bar down" style="height: 60%;"></div>
+                            <div class="c-bar up" style="height: 100%;"></div>
+                        </div>
+                        <div class="chart-line-overlay"></div>
                     </div>
                 </div>
 
-                <!-- Neural Matrix (New High-Tech Feature) -->
-                <div class="matrix-box">
+                <!-- Deep Learning Matrix (Animated Numbers) -->
+                <div class="cyber-matrix-box">
                     <div class="box-header"><i class="fa-solid fa-microchip"></i> Deep Learning Matrix (Active)</div>
                     <div class="matrix-grid font-mono" id="matrix-grid">
-                        <span>0x8F9A</span><span>0x11B2</span><span>0x99C4</span><span>0x44F0</span>
+                        <span class="matrix-num text-green">0x7AB8</span>
+                        <span class="matrix-num text-red">0xFF91</span>
+                        <span class="matrix-num text-green">0x036E</span>
+                        <span class="matrix-num text-gold">0x22B3</span>
                     </div>
                 </div>
 
-                <!-- Order Flow -->
-                <div class="order-depth-box">
+                <!-- Live Order Flow (Micro-Ticks) -->
+                <div class="cyber-order-box">
                     <div class="box-header">Live Order Flow (Micro-Ticks)</div>
-                    <div class="tick-row ask"><span class="ask-price">--</span><span class="ask-vol">-- USD</span></div>
-                    <div class="tick-row bid"><span class="bid-price">--</span><span class="bid-vol">-- USD</span></div>
+                    <div class="cyber-tick-row ask">
+                        <span class="font-mono" id="tick-ask-price">1.08547</span>
+                        <span class="font-mono text-red">55k USD</span>
+                    </div>
+                    <div class="cyber-tick-row bid">
+                        <span class="font-mono" id="tick-bid-price">1.08540</span>
+                        <span class="font-mono text-green">60k USD</span>
+                    </div>
                 </div>
 
-                <!-- Multi-Indicators -->
+                <!-- Indicator 1: Liquidity Heatmap -->
                 <div class="indicator-group">
-                    <div class="ind-info"><span>Liquidity Heatmap:</span><span id="liq-val" class="text-gold font-mono">Dense</span></div>
+                    <div class="ind-info">
+                        <span>Liquidity Heatmap:</span>
+                        <span id="liq-text" class="text-gold font-mono">Dense</span>
+                    </div>
                     <div class="bar-bg"><div id="liq-bar" class="bar-fill gold" style="width: 88%;"></div></div>
                 </div>
+
+                <!-- Indicator 2: Trend Momentum -->
                 <div class="indicator-group">
-                    <div class="ind-info"><span>Trend Momentum:</span><span id="mom-val" class="text-green font-mono">Surging</span></div>
+                    <div class="ind-info">
+                        <span>Trend Momentum:</span>
+                        <span id="mom-text" class="text-green font-mono">Surging</span>
+                    </div>
                     <div class="bar-bg"><div id="mom-bar" class="bar-fill green" style="width: 65%;"></div></div>
                 </div>
 
-                <div class="scanner-footer">
-                    <span class="footer-item"><i class="fa-solid fa-gear fa-spin"></i> <span id="ai-log">Initializing modules...</span></span>
+                <!-- AI Log Status Bar -->
+                <div class="cyber-footer-status">
+                    <i class="fa-solid fa-gear fa-spin"></i> 
+                    <span id="ai-log">Cross-checking RSI vectors & price action...</span>
                 </div>
             </div>
         </section>
@@ -123,7 +166,7 @@
                 <table class="analytics-table">
                     <thead><tr><th>Time</th><th>Pair</th><th>Action</th><th>Result</th></tr></thead>
                     <tbody id="history-body">
-                        <!-- Auto-generated by JS database -->
+                        <!-- Auto-generated by JS -->
                     </tbody>
                 </table>
             </div>
@@ -142,14 +185,14 @@
                 <div class="doc-sec">
                     <h4>1. Execution Protocol</h4>
                     <ul>
-                        <li>Wait for the exact <code>00:00</code> timer.</li>
-                        <li>Do not enter late (no more than 3 seconds delay).</li>
-                        <li>Use 1-Step Martingale (M1) on the very next candle if M0 loses.</li>
+                        <li>Signals release at exact round times (00, 05, 10...).</li>
+                        <li>Pre-alert triggers 20-30 seconds prior.</li>
+                        <li>Each trade duration is strictly 5 Minutes with a 5-minute gap.</li>
                     </ul>
                 </div>
                 <div class="doc-sec warning-box">
                     <h4>⚠️ Risk Disclaimer</h4>
-                    <p>Trading binary options is risky. AI signals aim for 90% accuracy but past performance does not guarantee future results.</p>
+                    <p>Trading binary options carries high risk. Use proper risk management and Martingale strategies wisely.</p>
                 </div>
             </div>
         </div>
@@ -162,6 +205,7 @@
         <button class="nav-btn" id="nav-analytics" onclick="switchTab('analytics', this)"><i class="fa-solid fa-chart-pie"></i><span>Analytics</span></button>
     </nav>
 
+    <script src="signals.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
