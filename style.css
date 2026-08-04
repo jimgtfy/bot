@@ -1,332 +1,201 @@
-:root {
-    --bg-main: #F8FAFC;
-    --bg-card: #FFFFFF;
-    --border-color: #EAECEF;
-    --text-primary: #1E2329;
-    --text-muted: #707A8A;
-    --brand-gold: #F0B90B;
-    --trade-green: #0ECB81;
-    --trade-red: #F6465D;
-}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Quotex Quant Room - Light Edition</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
 
-html, body { width: 100%; max-width: 100%; overflow-x: hidden; margin: 0; padding: 0; font-family: 'IBM Plex Sans', sans-serif; background-color: var(--bg-main); color: var(--text-primary); box-sizing: border-box; }
-*, *::before, *::after { box-sizing: inherit; }
-.font-mono { font-family: 'JetBrains Mono', monospace; }
-.text-green { color: var(--trade-green); }
-.text-red { color: var(--trade-red); }
-.text-gold { color: #C99400; }
-.mt-15 { margin-top: 15px; }
+    <!-- TOP HEADER -->
+    <header class="top-bar">
+        <div class="brand">
+            <i class="fa-solid fa-microchip logo-icon"></i>
+            <div class="brand-text">QUOTEX<span>QUANT</span></div>
+            <span class="badge-pro">PRO v4.0</span>
+        </div>
+        <div class="header-right">
+            <div class="traders-count" title="Live Users">
+                <span class="pulse-dot"></span>
+                <i class="fa-solid fa-users"></i>
+                <span id="active-traders">154</span>
+            </div>
+            <button class="icon-btn" onclick="openDocModal()"><i class="fa-solid fa-book"></i></button>
+            <button id="sound-btn" class="icon-btn active"><i class="fa-solid fa-volume-high"></i></button>
+        </div>
+    </header>
 
-/* HEADER */
-.top-bar { display: flex; justify-content: space-between; align-items: center; background: #FFF; padding: 12px 16px; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 100; }
-.brand { display: flex; align-items: center; gap: 6px; }
-.logo-icon { color: var(--brand-gold); font-size: 18px; }
-.brand-text { font-weight: 700; font-size: 16px; }
-.brand-text span { color: var(--brand-gold); }
-.badge-pro { background: #FFF9E6; color: #C99400; font-size: 9px; font-weight: 700; padding: 2px 4px; border-radius: 4px; border: 1px solid #F0B90B; }
-.header-right { display: flex; align-items: center; gap: 8px; }
-.traders-count { background: #F4F6F9; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; display: flex; align-items: center; gap: 5px; font-family: 'JetBrains Mono', monospace;}
-.pulse-dot { width: 6px; height: 6px; background-color: var(--trade-green); border-radius: 50%; animation: pulse 1s infinite alternate; }
-@keyframes pulse { from { transform: scale(0.8); opacity: 0.5; box-shadow: 0 0 0 transparent; } to { transform: scale(1.2); opacity: 1; box-shadow: 0 0 6px var(--trade-green); } }
-.icon-btn { background: #F4F6F9; border: 1px solid var(--border-color); padding: 6px 10px; border-radius: 6px; cursor: pointer; color: var(--text-muted); transition: 0.3s; }
-.icon-btn.active { color: var(--brand-gold); border-color: var(--brand-gold); background: #FFF9E6; }
+    <main class="main-container">
 
-/* MAIN */
-.main-container { padding: 14px; width: 100%; max-width: 480px; margin: 0 auto; padding-bottom: 70px; }
-.tab-content { display: none; animation: fadeIn 0.3s ease; }
-.tab-content.active { display: block; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        <!-- TAB 1: HOME (GUIDE & EXECUTION RULES) -->
+        <section id="tab-home" class="tab-content active">
+            <div class="hero-card">
+                <h2>AI Quantum Engine v4.0</h2>
+                <p>Neural Network Powered 5-Min Binary Signals.</p>
+                <button class="btn-primary" onclick="switchTab('signals', document.getElementById('nav-signals'))">
+                    <i class="fa-solid fa-bolt"></i> Go to Signal Room
+                </button>
+            </div>
 
-/* CARDS */
-.hero-card, .guide-card, .stat-card { background: #FFF; border: 1px solid var(--border-color); padding: 16px; border-radius: 10px; margin-bottom: 14px; }
-.hero-card { text-align: center; }
-.btn-primary { background: var(--brand-gold); color: #000; border: none; padding: 10px; border-radius: 8px; font-weight: 700; width: 100%; cursor: pointer; margin-top: 10px; }
-.guide-header { font-size: 13px; font-weight: 700; margin-bottom: 10px; }
-.step-item { display: flex; gap: 10px; margin-bottom: 8px; font-size: 12px; align-items: flex-start; }
-.step-num { background: var(--brand-gold); color: #000; font-weight: 700; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; border-radius: 50%; flex-shrink: 0; font-size: 11px; }
-.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.stat-card { padding: 12px; display: flex; flex-direction: column; }
-.stat-label { font-size: 11px; color: var(--text-muted); }
-.stat-val { font-size: 16px; font-weight: 700; font-family: 'JetBrains Mono', monospace; margin-top: 4px; }
+            <div class="guide-card mt-15">
+                <div class="guide-header"><i class="fa-solid fa-bullseye"></i> Execution Protocol & Rules</div>
+                <div class="guide-steps">
+                    <div class="step-item">
+                        <span class="step-num">1</span>
+                        <div class="step-text"><strong>Round Time Entry:</strong> Signals release strictly at exact round times (e.g., 00, 05, 10, 15... minutes).</div>
+                    </div>
+                    <div class="step-item">
+                        <span class="step-num">2</span>
+                        <div class="step-text"><strong>Pre-Alert Signal:</strong> 20-30 seconds before the round time, a Pre-Alert will pop up with the pair name. Get ready on Quotex.</div>
+                    </div>
+                    <div class="step-item">
+                        <span class="step-num">3</span>
+                        <div class="step-text"><strong>Live Execution:</strong> At 00 seconds, the <strong>CALL ⬆️</strong> or <strong>PUT ⬇️</strong> direction will appear. Place a 5-Minute trade immediately.</div>
+                    </div>
+                    <div class="step-item">
+                        <span class="step-num">4</span>
+                        <div class="step-text"><strong>Martingale Rule:</strong> If the 1st trade loses, apply a 1-Step Martingale (MTG) on the next 5-minute candle for the same pair and direction.</div>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-/* SIGNAL CARD DYNAMICS */
-.trade-alert-card { background: #FFF; border: 2px solid var(--border-color); border-radius: 10px; padding: 14px; margin-bottom: 14px; transition: 0.3s ease; }
-.trade-alert-card.analyzing { border-color: #EAECEF; }
-.trade-alert-card.pre-alert { border-color: var(--brand-gold); animation: preAlertPulse 1.5s infinite; background: #FFFDF5; }
-.trade-alert-card.active-signal { border-color: var(--trade-green); box-shadow: 0 0 15px rgba(14, 203, 129, 0.2); }
+        <!-- TAB 2: SIGNALS & HIGH-TECH THINKING UI -->
+        <section id="tab-signals" class="tab-content">
+            
+            <!-- DYNAMIC SIGNAL CARD -->
+            <div id="signal-card" class="trade-alert-card analyzing">
+                <div class="alert-top">
+                    <span class="alert-title" id="signal-status-title">
+                        <i class="fa-solid fa-satellite-dish fa-beat"></i> DEEP MARKET SCANNING...
+                    </span>
+                    <span class="timer-badge" id="countdown-timer">00:00</span>
+                </div>
+                
+                <div class="signal-details" id="signal-body">
+                    <p class="waiting-text">Scanning orderbooks across OTC pairs for high confluence...</p>
+                </div>
+                
+                <div class="bar-bg"><div id="timer-bar" class="bar-fill gold" style="width: 100%;"></div></div>
+            </div>
 
-@keyframes preAlertPulse { 0% { box-shadow: 0 0 0px rgba(240, 185, 11, 0); } 50% { box-shadow: 0 0 10px rgba(240, 185, 11, 0.5); } 100% { box-shadow: 0 0 0px rgba(240, 185, 11, 0); } }
+            <!-- LIGHT THEME HIGH-TECH THINKING MODE UI -->
+            <div class="cyber-scanner-container">
+                
+                <!-- Holographic Radar & Mini Chart Container -->
+                <div class="scanner-visual-row">
+                    <div class="holo-core-wrapper">
+                        <div class="radar-ring ring-1"></div>
+                        <div class="radar-ring ring-2"></div>
+                        <div class="radar-ring ring-3"></div>
+                        <div class="cyber-radar-sweep"></div>
+                        
+                        <div class="ai-hologram-brain">
+                            <i class="fa-solid fa-network-wired"></i>
+                            <span class="core-status">NEURAL NET</span>
+                        </div>
+                    </div>
 
-.alert-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-.alert-title { font-size: 11px; font-weight: 700; color: var(--text-muted); }
-.pre-alert .alert-title { color: #C99400; }
-.active-signal .alert-title { color: var(--trade-green); font-size: 13px; }
+                    <!-- Mini Live Candlestick Animation Box -->
+                    <div class="mini-chart-box">
+                        <div class="chart-header"><span>PRICE ACTION PATTERN</span><span class="text-green">LIVE</span></div>
+                        <div class="candlestick-bars">
+                            <div class="c-bar down" style="height: 40%;"></div>
+                            <div class="c-bar up" style="height: 65%;"></div>
+                            <div class="c-bar down" style="height: 50%;"></div>
+                            <div class="c-bar up" style="height: 85%;"></div>
+                            <div class="c-bar up" style="height: 95%;"></div>
+                            <div class="c-bar down" style="height: 60%;"></div>
+                            <div class="c-bar up" style="height: 100%;"></div>
+                        </div>
+                    </div>
+                </div>
 
-.timer-badge { background: #EAECEF; color: #000; font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; }
-.pre-alert .timer-badge { background: var(--brand-gold); }
-.active-signal .timer-badge { background: var(--trade-green); color: #FFF; }
+                <!-- Deep Learning Matrix -->
+                <div class="cyber-matrix-box">
+                    <div class="box-header"><i class="fa-solid fa-microchip"></i> Deep Learning Matrix (Active)</div>
+                    <div class="matrix-grid font-mono" id="matrix-grid">
+                        <span class="matrix-num text-green">0x7AB8</span>
+                        <span class="matrix-num text-red">0xFF91</span>
+                        <span class="matrix-num text-green">0x036E</span>
+                        <span class="matrix-num text-gold">0x22B3</span>
+                    </div>
+                </div>
 
-.signal-details { margin-bottom: 12px; min-height: 60px; display: flex; flex-direction: column; justify-content: center; }
-.waiting-text { font-size: 12px; color: var(--text-muted); text-align: center; font-style: italic; animation: pulseTxt 2s infinite; }
-@keyframes pulseTxt { 0%{opacity:0.5;} 50%{opacity:1;} 100%{opacity:0.5;} }
+                <!-- Live Order Flow (Micro-Ticks) -->
+                <div class="cyber-order-box">
+                    <div class="box-header">Live Order Flow (Micro-Ticks)</div>
+                    <div class="cyber-tick-row ask">
+                        <span class="font-mono">1.08547</span>
+                        <span class="font-mono text-red">55k USD</span>
+                    </div>
+                    <div class="cyber-tick-row bid">
+                        <span class="font-mono">1.08540</span>
+                        <span class="font-mono text-green">60k USD</span>
+                    </div>
+                </div>
 
-.signal-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 13px; }
-.signal-row .lbl { color: var(--text-muted); }
-.signal-row .val { font-weight: 700; font-size: 15px;}
-.val-action { padding: 6px 16px; border-radius: 6px; font-weight: 800; font-size: 16px; letter-spacing: 1px; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-.val-action.call { background: var(--trade-green); color: #FFF; box-shadow: 0 4px 10px rgba(14, 203, 129, 0.4); }
-.val-action.put { background: var(--trade-red); color: #FFF; box-shadow: 0 4px 10px rgba(246, 70, 93, 0.4); }
-@keyframes popIn { from { transform: scale(0.5); opacity: 0;} to { transform: scale(1); opacity: 1;} }
+                <!-- Indicator 1: Liquidity Heatmap -->
+                <div class="indicator-group">
+                    <div class="ind-info">
+                        <span>Liquidity Heatmap:</span>
+                        <span class="text-gold font-mono">Dense Confluence</span>
+                    </div>
+                    <div class="bar-bg"><div class="bar-fill gold" style="width: 88%;"></div></div>
+                </div>
 
-/* --- ADVANCED THINKING MODE & SCANNER UI --- */
-.cyber-scanner-container {
-    background: #FFFFFF;
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 14px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-}
+                <!-- Indicator 2: Trend Momentum -->
+                <div class="indicator-group">
+                    <div class="ind-info">
+                        <span>Trend Momentum:</span>
+                        <span class="text-green font-mono">Surging</span>
+                    </div>
+                    <div class="bar-bg"><div class="bar-fill green" style="width: 75%;"></div></div>
+                </div>
 
-.scanner-visual-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 12px;
-}
+                <!-- AI Log Status Bar -->
+                <div class="cyber-footer-status">
+                    <i class="fa-solid fa-gear fa-spin"></i> 
+                    <span id="ai-log">Cross-checking RSI vectors & price action...</span>
+                </div>
+            </div>
+        </section>
 
-/* Holographic Radar */
-.holo-core-wrapper {
-    width: 100%;
-    height: 110px;
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: radial-gradient(circle, #F8FAFC 0%, #EDF2F7 100%);
-    border: 1px solid #E2E8F0;
-    border-radius: 8px;
-    overflow: hidden;
-}
+    </main>
 
-.radar-ring {
-    position: absolute;
-    border: 1px dashed rgba(14, 203, 129, 0.4);
-    border-radius: 50%;
-    animation: radarExpand 3s linear infinite;
-}
+    <!-- SYSTEM DOCUMENTATION MODAL -->
+    <div id="doc-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-file-contract"></i> System Protocol</h3>
+                <button class="close-btn" onclick="closeDocModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="doc-sec">
+                    <h4>Execution Protocol</h4>
+                    <ul>
+                        <li>Signals trigger at exact round 5-min intervals.</li>
+                        <li>Pre-alert appears 20-30 seconds prior.</li>
+                        <li>Use strict risk management (1-2% per trade).</li>
+                    </ul>
+                </div>
+                <div class="doc-sec warning-box">
+                    <h4>⚠️ Risk Disclaimer</h4>
+                    <p>Trading binary options involves risk. Always follow money management and use MTG carefully.</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
-.ring-1 { width: 75px; height: 75px; animation-delay: 0s; }
-.ring-2 { width: 50px; height: 50px; animation-delay: 1s; }
-.ring-3 { width: 25px; height: 25px; animation-delay: 2s; }
+    <!-- BOTTOM NAV (ONLY 2 TABS) -->
+    <nav class="bottom-nav">
+        <button class="nav-btn active" id="nav-home" onclick="switchTab('home', this)"><i class="fa-solid fa-house"></i><span>Home</span></button>
+        <button class="nav-btn" id="nav-signals" onclick="switchTab('signals', this)"><i class="fa-solid fa-satellite-dish"></i><span>Signals</span></button>
+    </nav>
 
-@keyframes radarExpand {
-    0% { transform: scale(0.9); opacity: 0.8; }
-    50% { transform: scale(1.08); opacity: 0.2; }
-    100% { transform: scale(0.9); opacity: 0.8; }
-}
-
-.cyber-radar-sweep {
-    position: absolute;
-    width: 50%;
-    height: 50%;
-    top: 0;
-    right: 0;
-    background: linear-gradient(135deg, rgba(14, 203, 129, 0.3) 0%, transparent 80%);
-    transform-origin: 0% 100%;
-    border-top-right-radius: 100%;
-    animation: cyberSweep 2s linear infinite;
-}
-
-@keyframes cyberSweep {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-.ai-hologram-brain {
-    position: relative;
-    z-index: 2;
-    text-align: center;
-    color: var(--trade-green);
-}
-
-.ai-hologram-brain i {
-    font-size: 18px;
-}
-
-.core-status {
-    display: block;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 7px;
-    font-weight: 700;
-    color: #4A5568;
-    margin-top: 2px;
-    letter-spacing: 0.5px;
-}
-
-/* Mini Live Chart Pattern Animation Box */
-.mini-chart-box {
-    background: #0B0E11;
-    border: 1px solid #1E2329;
-    border-radius: 8px;
-    padding: 8px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    position: relative;
-    overflow: hidden;
-}
-
-.chart-header {
-    display: flex;
-    justify-content: space-between;
-    font-size: 8px;
-    color: #848E9C;
-    font-family: 'JetBrains Mono', monospace;
-    font-weight: 600;
-}
-
-.candlestick-bars {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    height: 60px;
-    padding: 4px 2px;
-}
-
-.c-bar {
-    width: 6px;
-    border-radius: 2px;
-    animation: barBounce 1.2s infinite alternate ease-in-out;
-}
-
-.c-bar.up { background-color: var(--trade-green); }
-.c-bar.down { background-color: var(--trade-red); }
-
-.c-bar:nth-child(1) { animation-delay: 0.1s; }
-.c-bar:nth-child(2) { animation-delay: 0.3s; }
-.c-bar:nth-child(3) { animation-delay: 0.2s; }
-.c-bar:nth-child(4) { animation-delay: 0.5s; }
-.c-bar:nth-child(5) { animation-delay: 0.4s; }
-.c-bar:nth-child(6) { animation-delay: 0.6s; }
-.c-bar:nth-child(7) { animation-delay: 0.2s; }
-
-@keyframes barBounce {
-    0% { transform: scaleY(0.5); opacity: 0.5; }
-    100% { transform: scaleY(1); opacity: 1; }
-}
-
-/* Matrix Code Box */
-.cyber-matrix-box {
-    background: #0B0E11;
-    border-radius: 6px;
-    padding: 8px 10px;
-    margin-bottom: 10px;
-}
-
-.cyber-matrix-box .box-header {
-    color: #848E9C;
-    font-size: 9px;
-    margin-bottom: 6px;
-    font-weight: 600;
-}
-
-.matrix-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 4px;
-    font-size: 10px;
-    text-align: center;
-}
-
-.matrix-num {
-    animation: numberFlicker 0.8s infinite alternate;
-}
-
-@keyframes numberFlicker {
-    0% { opacity: 0.4; }
-    100% { opacity: 1; text-shadow: 0 0 4px currentColor; }
-}
-
-/* Micro-Tick Order Flow */
-.cyber-order-box {
-    background: #F8FAFC;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    padding: 8px 10px;
-    margin-bottom: 10px;
-}
-
-.cyber-order-box .box-header {
-    font-size: 9px;
-    color: var(--text-muted);
-    margin-bottom: 6px;
-    font-weight: 600;
-}
-
-.cyber-tick-row {
-    display: flex;
-    justify-content: space-between;
-    font-size: 10px;
-    margin-bottom: 3px;
-    font-family: 'JetBrains Mono', monospace;
-}
-
-.cyber-tick-row.ask { color: var(--trade-red); }
-.cyber-tick-row.bid { color: var(--trade-green); }
-
-/* Indicators */
-.indicator-group {
-    margin-bottom: 8px;
-}
-
-.ind-info {
-    display: flex;
-    justify-content: space-between;
-    font-size: 10px;
-    margin-bottom: 3px;
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-.bar-bg { height: 6px; background: #EAECEF; border-radius: 10px; overflow: hidden; }
-.bar-fill { height: 100%; transition: width 0.3s ease; }
-.bar-fill.green { background: var(--trade-green); }
-.bar-fill.gold { background: var(--brand-gold); }
-
-.cyber-footer-status {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 9px;
-    color: var(--text-muted);
-    border-top: 1px dashed var(--border-color);
-    padding-top: 8px;
-    text-align: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-}
-
-.cyber-footer-status i {
-    color: var(--brand-gold);
-}
-
-/* TABLE */
-.table-container { background: #FFF; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; }
-.analytics-table { width: 100%; border-collapse: collapse; font-size: 11px; font-family: 'JetBrains Mono', monospace; }
-.analytics-table th, .analytics-table td { padding: 10px; text-align: left; border-bottom: 1px solid var(--border-color); }
-.analytics-table th { background: #F8FAFC; color: var(--text-muted); font-family: 'IBM Plex Sans', sans-serif;}
-
-/* MODAL & NAV */
-.modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 200; justify-content: center; align-items: center; }
-.modal-content { background: #FFF; width: 90%; max-width: 400px; border-radius: 10px; padding: 16px; max-height: 80vh; overflow-y: auto; }
-.modal-header { display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 12px; }
-.close-btn { background: none; border: none; font-size: 20px; cursor: pointer; }
-.doc-sec { margin-bottom: 12px; font-size: 12px; }
-.doc-sec ul { padding-left: 16px; margin-top: 5px;}
-.warning-box { background: #FFF9E6; border: 1px solid #F0B90B; padding: 10px; border-radius: 6px; }
-
-.bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #FFF; border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; padding: 10px 0; z-index: 100; }
-.nav-btn { background: none; border: none; display: flex; flex-direction: column; align-items: center; color: var(--text-muted); font-size: 10px; cursor: pointer; }
-.nav-btn.active { color: var(--brand-gold); font-weight: 700; }
-.nav-btn i { font-size: 18px; margin-bottom: 4px; }
-    
+    <script src="script.js"></script>
+</body>
+</html>
